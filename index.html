@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual N-Back Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <h1>Sharpen Your Mind with Dual N-Back</h1>
+        <p class="tagline">Train your working memory, boost your focus, and challenge your brain — every day.</p>
+        
+        <div id="level">
+            <button id="level-down" class="level-btn">-</button>
+            <span>N-Back Level: <span id="level-value">2</span></span>
+            <button id="level-up" class="level-btn">+</button>
+        </div>
+        <div id="game-area">
+            <div>
+                <div id="grid-container"></div>
+                <div id="response-buttons">
+                    <button id="position-btn" class="response-btn" disabled>Position (A)</button>
+                    <button id="letter-btn" class="response-btn" disabled>Letter (Z)</button>
+                </div>
+                <div id="controls">
+                    <button id="start-btn">Start</button>
+                    <button id="pause-btn" disabled>Pause</button>
+                    <button id="reset-btn">Reset</button>
+                </div>
+            </div>
+        </div>
+        <div id="scores-container">
+            <div id="position-score" class="score-item">Position: <span id="position-score-value">0/0</span></div>
+            <div id="score" class="score-item">Total Score: <span id="score-value">0</span></div>
+            <div id="letter-score" class="score-item">Letter: <span id="letter-score-value">0/0</span></div>
+        </div>
+        <div id="trial">
+            <button id="trial-down" class="level-btn">-</button>
+            <span>Trials: <span id="trial-value">0/30</span></span>
+            <button id="trial-up" class="level-btn">+</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to Play:</h3>
+            <p>Watch the grid for position and listen for spoken letters.</p>
+            <p>Press <kbd>A</kbd> if the current position matches the position from N steps back.</p>
+            <p>Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.</p>
+            <p>You can respond to either one or both modalities - no penalty for not responding.</p>
+            <p>You have 2.5 seconds to respond once the N-back threshold is reached.</p>
+        </div>
+    </div>
+
+    <div class="promotional-section">
+        <h3>Welcome to the ultimate brain training experience.</h3>
+        
+        
+        <p class="description">
+            Dual N-Back is a scientifically inspired memory and attention training tool designed to improve your fluid intelligence, working memory, and cognitive control. Whether you're a student, professional, or lifelong learner, our game adapts to your performance and keeps your mind actively engaged.
+        </p>
+
+        <h3>Why Dual N-Back?</h3>
+        <div class="features">
+            <div class="feature">
+                <span class="emoji">🧠</span>
+                <strong>Scientifically Backed:</strong> Based on cognitive neuroscience research.
+            </div>
+            <div class="feature">
+                <span class="emoji">🎯</span>
+                <strong>Customizable Levels:</strong> Start easy, push your limits as you improve.
+            </div>
+            <div class="feature">
+                <span class="emoji">📈</span>
+                <strong>Track Your Progress:</strong> See how your memory and focus evolve over time.
+            </div>
+            <div class="feature">
+                <span class="emoji">🕹️</span>
+                <strong>Minimalist Design, Maximum Focus:</strong> No distractions, just training.
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h3>Ready to level up your brain?</h3>
+            <p>Start your first session — it only takes 20 minutes a day.</p>
+            
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

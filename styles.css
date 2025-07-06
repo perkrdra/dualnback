@@ -1,0 +1,489 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: white;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+#game-container {
+    background-color: white;
+    padding: 30px;
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+}
+
+#game-container h1 {
+    margin-bottom: 20px;
+}
+#game-container h1 {
+    color: #1e4285;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+#game-container p.tagline {
+    margin-bottom: 50px;
+    font-size: 1.3em;
+    color: #ea6a4b;
+    font-weight: 500;
+}
+
+#game-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+#grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 330px;
+}
+
+.key-hint {
+    font-size: 16px;
+    color: #666;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.grid-cell {
+    width: 100px;
+    height: 100px;
+    background-color: #f2c20a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 36px;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    cursor: default;
+    color: #2552a3;
+}
+
+.grid-cell.active {
+    background-color: #ea6a4b;
+    color: white;
+    transform: scale(1.05);
+}
+
+#response-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.response-btn {
+    background-color: #2552a3;
+    color: white;
+    padding: 15px 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.response-btn:hover:not(:disabled) {
+    background-color: #1e4285;
+    transform: scale(1.02);
+}
+
+.response-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.response-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 0;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#start-btn, #pause-btn, #reset-btn {
+    width: 100%;
+    padding: 10px 0;
+}
+
+#start-btn {
+    background-color: #1e4285;
+    color: white;
+}
+
+#start-btn:hover:not(:disabled) {
+    background-color: #163068;
+}
+
+#pause-btn {
+    background-color: #1e4285;
+    color: white;
+}
+
+#pause-btn:hover:not(:disabled) {
+    background-color: #163068;
+}
+
+#reset-btn {
+    background-color: #1e4285;
+    color: white;
+}
+
+#reset-btn:hover {
+    background-color: #163068;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#scores-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.score-item {
+    font-size: 18px;
+    color: #333;
+}
+
+#trial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+#score-value, #position-score-value, #letter-score-value, #level-value, #trial-value {
+    font-weight: bold;
+    color: #ea6a4b;
+}
+
+#level {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.level-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    margin: 0 2px;
+    font-size: 18px;
+    line-height: 1;
+    background-color: #2552a3;
+    color: white;
+    border-radius: 50%;
+}
+
+.level-btn:hover:not(:disabled) {
+    background-color: #1e4285;
+}
+
+.instructions {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #d1dbee;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.instructions h3 {
+    color: #1e4285;
+    font-size: 1.3em;
+}
+
+.instructions p {
+    margin: 10px 0;
+    color: #000000;
+    font-size: 1.1em;
+}
+
+.instructions kbd {
+    background-color: #8ea0c2;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 1.1em;
+}
+
+/* Promotional Section */
+.promotional-section {
+    max-width: 800px;
+    width: 100%;
+    margin: 20px 0 40px;
+    padding: 10px;
+    background-color: white;
+    text-align: center;
+}
+
+.promotional-section h2 {
+    color: #1e4285;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.promotional-section .tagline {
+    font-size: 1.3em;
+    color: #ea6a4b;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.promotional-section .welcome {
+    font-size: 1.1em;
+    color: #2552a3;
+    margin-bottom: 30px;
+    font-style: italic;
+}
+
+.promotional-section .description {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 40px;
+    text-align: left;
+}
+
+.promotional-section h3 {
+    color: #1e4285;
+    font-size: 1.8em;
+    margin: 30px 0 20px;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.feature {
+    display: flex;
+    align-items: flex-start;
+    text-align: left;
+    padding: 15px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.feature .emoji {
+    font-size: 1.5em;
+    margin-right: 15px;
+    margin-top: 2px;
+}
+
+.feature strong {
+    color: #2552a3;
+}
+
+.cta-section {
+    margin-top: 40px;
+    padding: 30px;
+    background: #f2c20a
+    border-radius: 15px;
+    color: £f2c20a;
+}
+
+.cta-section h3 {
+    
+    margin-bottom: 15px;
+}
+
+.cta-section p {
+    font-size: 1.2em;
+    margin-bottom: 25px;
+}
+
+.play-now-btn {
+    background-color: #ea6a4b;
+    color: white;
+    font-size: 1.3em;
+    font-weight: bold;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(234, 106, 75, 0.3);
+}
+
+.play-now-btn:hover {
+    background-color: #d4553c;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(234, 106, 75, 0.4);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    #game-container {
+        padding: 20px;
+    }
+    
+    #game-container h1 {
+        font-size: 1.8em;
+        margin-bottom: 10px;
+    }
+    
+    #game-container p.tagline {
+        font-size: 1.1em;
+        margin-bottom: 30px;
+    }
+    
+    #game-area {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .key-hint {
+        font-size: 14px;
+    }
+    
+    #grid-container {
+        width: 270px;
+        gap: 8px;
+    }
+    
+    .grid-cell {
+        width: 80px;
+        height: 80px;
+        font-size: 28px;
+    }
+    
+    #response-buttons {
+        gap: 8px;
+    }
+    
+    .response-btn {
+        font-size: 14px;
+        padding: 12px 8px;
+    }
+    
+    #controls {
+        gap: 8px;
+    }
+    
+    button {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+    
+    #scores-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .score-item {
+        font-size: 16px;
+    }
+    
+    #level, #trial {
+        font-size: 16px;
+    }
+    
+    .level-btn {
+        width: 25px;
+        height: 25px;
+        font-size: 16px;
+    }
+    
+    .instructions {
+        padding: 15px;
+    }
+    
+    .instructions h3 {
+        font-size: 1.2em;
+    }
+    
+    .instructions p {
+        font-size: 1em;
+    }
+    
+    .promotional-section {
+        margin: 20px 0;
+        padding: 20px;
+    }
+    
+    .promotional-section h2 {
+        font-size: 2em;
+    }
+    
+    .promotional-section .tagline {
+        font-size: 1.1em;
+    }
+    
+    .promotional-section .welcome {
+        font-size: 1em;
+    }
+    
+    .promotional-section .description {
+        font-size: 1em;
+    }
+    
+    .promotional-section h3 {
+        font-size: 1.5em;
+    }
+    
+    .features {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .feature {
+        padding: 12px;
+    }
+    
+    .cta-section {
+        padding: 20px;
+    }
+    
+    .cta-section p {
+        font-size: 1.1em;
+    }
+    
+    .play-now-btn {
+        font-size: 1.2em;
+        padding: 12px 30px;
+    }
+}
