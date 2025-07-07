@@ -38,6 +38,9 @@ class DualNBackGame {
         this.trialDownBtn = document.getElementById('trial-down');
         this.positionBtn = document.getElementById('position-btn');
         this.letterBtn = document.getElementById('letter-btn');
+        this.gameModeSelect = document.getElementById('game-mode');
+        
+        this.gameMode = 'dual'; // 'dual', 'position', or 'letter'
 
         this.initGrid();
         this.addEventListeners();
@@ -46,6 +49,7 @@ class DualNBackGame {
         this.updateTrialDisplay();
         this.updateTrialButtons();
         this.updateScoreDisplays();
+        this.updateButtonsForMode();
     }
 
     initGrid() {
@@ -67,6 +71,7 @@ class DualNBackGame {
         this.trialDownBtn.addEventListener('click', () => this.adjustTrials(-5));
         this.positionBtn.addEventListener('click', () => this.handlePositionClick());
         this.letterBtn.addEventListener('click', () => this.handleLetterClick());
+        this.gameModeSelect.addEventListener('change', () => this.handleModeChange());
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
     }
 
@@ -76,8 +81,8 @@ class DualNBackGame {
         this.interval = setInterval(() => this.nextRound(), 3000);
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
-        this.positionBtn.disabled = false;
-        this.letterBtn.disabled = false;
+        this.updateButtonsForMode();
+        this.gameModeSelect.disabled = true;
     }
 
     pauseGame() {
@@ -87,6 +92,7 @@ class DualNBackGame {
         this.pauseBtn.disabled = true;
         this.positionBtn.disabled = true;
         this.letterBtn.disabled = true;
+        this.gameModeSelect.disabled = false;
     }
 
     resetGame() {
@@ -131,8 +137,22 @@ class DualNBackGame {
         this.sequence = [];
         const totalRounds = this.trialsPerSession + this.nBack; // Need extra rounds for n-back
         const targetMatches = Math.floor(this.trialsPerSession * 2 / 3); // Scale matches with trials (2/3)
-        const positionMatches = Math.ceil(targetMatches / 2);
-        const letterMatches = Math.floor(targetMatches / 2);
+        
+        let positionMatches, letterMatches;
+        switch (this.gameMode) {
+            case 'dual':
+                positionMatches = Math.ceil(targetMatches / 2);
+                letterMatches = Math.floor(targetMatches / 2);
+                break;
+            case 'position':
+                positionMatches = targetMatches;
+                letterMatches = 0;
+                break;
+            case 'letter':
+                positionMatches = 0;
+                letterMatches = targetMatches;
+                break;
+        }
         
         // First, generate random sequence
         for (let i = 0; i < totalRounds; i++) {
@@ -221,8 +241,12 @@ class DualNBackGame {
         
         this.clearGrid();
         this.activateCell(current.position);
-        this.playSound(current.letter);
-        this.showLetter(current.letter);
+        
+        // Only play sound and show letter if not in position-only mode
+        if (this.gameMode !== 'position') {
+            this.playSound(current.letter);
+            this.showLetter(current.letter);
+        }
 
         this.currentRound++;
 
@@ -326,11 +350,11 @@ class DualNBackGame {
             return;
         }
 
-        if (e.key === 'a' && !this.positionMatched) {
+        if (e.key === 'a' && !this.positionMatched && this.gameMode !== 'letter') {
             console.log('A pressed - checking position match');
             this.positionMatched = true;
             this.checkPositionMatch();
-        } else if (e.key === 'z' && !this.soundMatched) {
+        } else if (e.key === 'z' && !this.soundMatched && this.gameMode !== 'position') {
             console.log('Z pressed - checking letter match');
             this.soundMatched = true;
             this.checkLetterMatch();
@@ -355,6 +379,45 @@ class DualNBackGame {
         console.log('Letter button clicked - checking letter match');
         this.soundMatched = true;
         this.checkLetterMatch();
+    }
+
+    handleModeChange() {
+        if (this.isPlaying) return;
+        
+        this.gameMode = this.gameModeSelect.value;
+        this.resetSession();
+        this.updateButtonsForMode();
+        this.updateScoreDisplays();
+        console.log(`Game mode changed to: ${this.gameMode}`);
+    }
+
+    updateButtonsForMode() {
+        if (!this.isPlaying) {
+            this.positionBtn.disabled = true;
+            this.letterBtn.disabled = true;
+            return;
+        }
+        
+        switch (this.gameMode) {
+            case 'dual':
+                this.positionBtn.disabled = false;
+                this.letterBtn.disabled = false;
+                this.positionBtn.style.display = 'block';
+                this.letterBtn.style.display = 'block';
+                break;
+            case 'position':
+                this.positionBtn.disabled = false;
+                this.letterBtn.disabled = true;
+                this.positionBtn.style.display = 'block';
+                this.letterBtn.style.display = 'none';
+                break;
+            case 'letter':
+                this.positionBtn.disabled = true;
+                this.letterBtn.disabled = false;
+                this.positionBtn.style.display = 'none';
+                this.letterBtn.style.display = 'block';
+                break;
+        }
     }
 
     updateScore() {
@@ -494,14 +557,16 @@ class DualNBackGame {
         const popup = document.createElement('div');
         const totalAvailableMatches = Math.floor(this.trialsPerSession * 2 / 3);
         const isPerfect = score === totalAvailableMatches;
-        const bgColor = isPerfect ? 'linear-gradient(135deg, #f2c20a 0%, #2552a3 100%)' : 
-                       score >= totalAvailableMatches * 0.8 ? 'linear-gradient(135deg, #f2c20a 0%, #ea6a4b 100%)' :
-                       score >= totalAvailableMatches * 0.6 ? 'linear-gradient(135deg, #2552a3 0%, #f2c20a 100%)' :
-                       'linear-gradient(135deg, #ea6a4b 0%, #2552a3 100%)';
+        const bgColor = isPerfect ? '#f2c20a' : 
+                       score >= totalAvailableMatches * 0.8 ? '#2552a3' :
+                       score >= totalAvailableMatches * 0.6 ? '#ea6a4b' :
+                       '#f9f9f9';
+        
+        const textColor = bgColor === '#f9f9f9' ? '#333' : 'white';
         
         popup.style.cssText = `
             background: ${bgColor};
-            color: white;
+            color: ${textColor};
             padding: 40px;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -535,7 +600,7 @@ class DualNBackGame {
                 padding: 15px 30px;
                 font-size: 18px;
                 background: white;
-                color: ${isPerfect ? '#f2c20a' : '#2552a3'};
+                color: #2552a3;
                 border: none;
                 border-radius: 30px;
                 cursor: pointer;
@@ -571,11 +636,30 @@ class DualNBackGame {
     }
 
     updateScoreDisplays() {
+        const positionScoreDiv = document.getElementById('position-score');
+        const letterScoreDiv = document.getElementById('letter-score');
+        
         if (this.positionScoreValue) {
             this.positionScoreValue.textContent = `${this.positionCorrect}/${this.positionTotal}`;
         }
         if (this.letterScoreValue) {
             this.letterScoreValue.textContent = `${this.letterCorrect}/${this.letterTotal}`;
+        }
+        
+        // Show/hide scores based on mode
+        switch (this.gameMode) {
+            case 'dual':
+                positionScoreDiv.style.display = 'block';
+                letterScoreDiv.style.display = 'block';
+                break;
+            case 'position':
+                positionScoreDiv.style.display = 'block';
+                letterScoreDiv.style.display = 'none';
+                break;
+            case 'letter':
+                positionScoreDiv.style.display = 'none';
+                letterScoreDiv.style.display = 'block';
+                break;
         }
     }
 
