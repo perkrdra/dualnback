@@ -2,16 +2,75 @@ body {
     font-family: Arial, sans-serif;
     background-color: white;
     margin: 0;
-    padding: 20px;
+    padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
 }
 
+.top-bar {
+    width: 100%;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    padding: 8px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.top-bar.collapsed {
+    padding: 4px 0;
+    background-color: rgba(248, 249, 250, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.top-bar.collapsed .domain-name {
+    font-size: 1em;
+    padding: 3px 15px;
+}
+
+.top-bar.collapsed .logo-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.domain-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #2552a3;
+    text-decoration: none;
+    padding: 6px 20px;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.domain-name:hover {
+    background-color: #e9ecef;
+    border-color: #2552a3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 #game-container {
     background-color: white;
     padding: 30px;
+    margin-top: 20px;
     text-align: center;
     max-width: 800px;
     width: 100%;
@@ -202,7 +261,7 @@ button:disabled {
     align-items: center;
     justify-content: center;
     gap: 15px;
-    margin: 20px 0;
+    margin: 40px 0;
 }
 
 #mode-selector {
@@ -360,7 +419,6 @@ button:disabled {
 .cta-section {
     margin-top: 40px;
     padding: 30px;
-    background: ;
     border-radius: 15px;
     color: 333;
 }
@@ -402,6 +460,7 @@ button:disabled {
     padding: 20px 20px;
     background-color: #f8f9fa;
     text-align: center;
+    margin-bottom: 30px;
 }
 
 .supplements-section h2 {
@@ -478,6 +537,98 @@ button:disabled {
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+}
+
+/* Research Section */
+.research-section {
+    max-width: 100%;
+    width: 100%;
+    padding: 40px 20px;
+    background-color: white;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.research-section h2 {
+    color: #1e4285;
+    font-size: 2.2em;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.research-intro {
+    font-size: 1.2em;
+    color: #666;
+    margin-bottom: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.research-references {
+    max-width: 900px;
+    margin: 0 auto 30px;
+    text-align: left;
+}
+
+.reference-item {
+    background-color: #f8f9fa;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #2552a3;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.reference-item h3 {
+    color: #1e4285;
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.reference-link {
+    color: #1e4285;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.reference-link:hover {
+    color: #2552a3;
+    text-decoration: underline;
+}
+
+.reference-authors {
+    color: #2552a3;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 1em;
+}
+
+.reference-journal {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+
+.reference-summary {
+    color: #333;
+    line-height: 1.5;
+    margin: 0;
+    font-size: 1em;
+}
+
+.research-note {
+    background-color: #fff4e6;
+    border: 1px solid #ffc107;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 800px;
+    margin: 30px auto 0;
+    color: #856404;
+    font-size: 1em;
+    line-height: 1.5;
 }
 
 /* Mobile Responsive Styles */

@@ -107,7 +107,7 @@ class DualNBackGame {
         if (this.isPlaying) return;
         
         const newLevel = this.nBack + change;
-        if (newLevel >= 2 && newLevel <= 6) {
+        if (newLevel >= 1 && newLevel <= 9) {
             this.nBack = newLevel;
             this.updateLevel();
             this.resetSession();
@@ -128,8 +128,8 @@ class DualNBackGame {
 
     updateLevel() {
         this.levelValue.textContent = this.nBack;
-        this.levelUpBtn.disabled = this.nBack >= 6;
-        this.levelDownBtn.disabled = this.nBack <= 2;
+        this.levelUpBtn.disabled = this.nBack >= 9;
+        this.levelDownBtn.disabled = this.nBack <= 1;
     }
 
     generateSequenceWithMatches() {
@@ -688,7 +688,7 @@ class DualNBackGame {
             message += `You're ready to increase the difficulty.\n\n`;
             message += `Press OK to advance to ${this.nBack + 1}-back level!`;
             
-            if (this.nBack < 6) {
+            if (this.nBack < 9) {
                 this.nBack++;
                 this.updateLevel();
             }
