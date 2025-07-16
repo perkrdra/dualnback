@@ -153,6 +153,69 @@
             margin-bottom: 10px;
         }
         
+        .products-section {
+            background-color: #f0f8ff;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .products-section h2 {
+            color: #1e4285;
+            margin-bottom: 20px;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .product-card h4 {
+            color: #2552a3;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .product-card p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .product-link {
+            display: inline-block;
+            color: #ea6a4b;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        
+        .product-link:hover {
+            text-decoration: underline;
+        }
+        
+        .price {
+            color: #2552a3;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
         @media (max-width: 768px) {
             .product-hero h1 {
                 font-size: 2em;
@@ -172,7 +235,7 @@
 </head>
 <body>
     <div class="product-page">
-        <a href="index.html" class="back-link">← Back to Brain Training</a>
+        <a href="/" class="back-link">← Back to Brain Training</a>
         
         <div class="product-hero">
             <h1>Choline for Cognitive Enhancement</h1>
@@ -247,10 +310,50 @@
             </ul>
         </div>
         
+        <div class="products-section">
+            <h2>Top 3 Best-Selling Choline Supplements</h2>
+            <p>These are highly-rated choline supplements chosen for their bioavailability, purity, and cognitive benefits:</p>
+            
+            <div class="product-grid">
+                <div class="product-card">
+                    <h4>Alpha-GPC by Double Wood Supplements</h4>
+                    <p class="price">$22.95 - $39.95</p>
+                    <p>Highly bioavailable form of choline that easily crosses the blood-brain barrier. 600mg capsules with 99% purity. Third-party tested for quality assurance.</p>
+                    <a href="https://www.amazon.com/s?k=alpha+gpc+double+wood" class="product-link" target="_blank" rel="noopener noreferrer">View on Amazon →</a>
+                    <br><br>
+                    <a href="https://www.iherb.com/search?kw=alpha+gpc+choline" class="product-link" target="_blank" rel="noopener noreferrer">View on iHerb →</a>
+                    <br><br>
+                    <a href="https://www.bulksupplements.com/products/alpha-gpc-powder" class="product-link" target="_blank" rel="noopener noreferrer">View on BulkSupplements →</a>
+                </div>
+                
+                <div class="product-card">
+                    <h4>CDP-Choline (Citicoline) by Jarrow Formulas</h4>
+                    <p class="price">$24.99 - $44.99</p>
+                    <p>Cognizin® brand citicoline for enhanced cognitive function. Supports memory, focus, and attention. 250mg capsules with superior absorption.</p>
+                    <a href="https://www.amazon.com/s?k=jarrow+citicoline+cdp+choline" class="product-link" target="_blank" rel="noopener noreferrer">View on Amazon →</a>
+                    <br><br>
+                    <a href="https://www.iherb.com/search?kw=jarrow+citicoline" class="product-link" target="_blank" rel="noopener noreferrer">View on iHerb →</a>
+                    <br><br>
+                    <a href="https://www.bulksupplements.com/products/cdp-choline-powder" class="product-link" target="_blank" rel="noopener noreferrer">View on BulkSupplements →</a>
+                </div>
+                
+                <div class="product-card">
+                    <h4>Choline Bitartrate by NOW Foods</h4>
+                    <p class="price">$12.99 - $24.99</p>
+                    <p>Affordable choline supplement supporting brain and nervous system health. 500mg capsules with no artificial additives. Vegetarian-friendly formula.</p>
+                    <a href="https://www.amazon.com/s?k=now+foods+choline+bitartrate" class="product-link" target="_blank" rel="noopener noreferrer">View on Amazon →</a>
+                    <br><br>
+                    <a href="https://www.iherb.com/search?kw=now+foods+choline+bitartrate" class="product-link" target="_blank" rel="noopener noreferrer">View on iHerb →</a>
+                    <br><br>
+                    <a href="https://www.bulksupplements.com/products/choline-bitartrate-powder" class="product-link" target="_blank" rel="noopener noreferrer">View on BulkSupplements →</a>
+                </div>
+            </div>
+        </div>
+        
         <div class="cta-box">
             <h2>Enhance Your Cognitive Training</h2>
             <p>Support your neurotransmitter production with choline while training your working memory with dual n-back exercises.</p>
-            <a href="index.html" class="cta-button">Start Training Now</a>
+            <a href="/" class="cta-button">Start Training Now</a>
         </div>
         
         <p style="text-align: center; color: #999; font-style: italic; margin-top: 40px;">

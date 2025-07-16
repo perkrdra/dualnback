@@ -50,6 +50,9 @@ class DualNBackGame {
         this.updateTrialButtons();
         this.updateScoreDisplays();
         this.updateButtonsForMode();
+        
+        // Session tracking
+        this.sessionStartTime = null;
     }
 
     initGrid() {
@@ -77,6 +80,7 @@ class DualNBackGame {
 
     startGame() {
         this.isPlaying = true;
+        this.sessionStartTime = Date.now();
         this.generateSequenceWithMatches();
         this.interval = setInterval(() => this.nextRound(), 3000);
         this.startBtn.disabled = true;
@@ -500,41 +504,7 @@ class DualNBackGame {
     }
 
     showFeedback(correct, type) {
-        const feedbackDiv = document.createElement('div');
-        feedbackDiv.className = 'feedback';
-        feedbackDiv.style.cssText = `
-            position: fixed;
-            top: 20%;
-            right: 20px;
-            padding: 8px 12px;
-            background: ${correct ? '#f2c20a' : '#ea6a4b'};
-            color: ${correct ? '#2552a3' : 'white'};
-            border-radius: 15px;
-            font-size: 14px;
-            z-index: 1000;
-            opacity: 0.8;
-            animation: slideIn 0.2s ease-out;
-        `;
-        
-        let message = '';
-        if (type === 'position') {
-            message = correct ? 'Position ✓' : 'Position ✗';
-        } else if (type === 'letter') {
-            message = correct ? 'Letter ✓' : 'Letter ✗';
-        } else if (type === 'position-missed') {
-            message = 'Position ✗';
-        } else if (type === 'letter-missed') {
-            message = 'Letter ✗';
-        }
-        
-        feedbackDiv.textContent = message;
-        document.body.appendChild(feedbackDiv);
-        
-        setTimeout(() => {
-            feedbackDiv.style.opacity = '0';
-            feedbackDiv.style.transform = 'translateX(100px)';
-            setTimeout(() => feedbackDiv.remove(), 200);
-        }, 800);
+        // Feedback popups have been removed
     }
 
     showSessionComplete(message, score) {
@@ -583,10 +553,6 @@ class DualNBackGame {
             @keyframes popIn {
                 0% { transform: scale(0.8); opacity: 0; }
                 100% { transform: scale(1); opacity: 1; }
-            }
-            @keyframes slideIn {
-                0% { transform: translateX(100px); opacity: 0; }
-                100% { transform: translateX(0); opacity: 0.8; }
             }
         `;
         document.head.appendChild(style);
@@ -666,6 +632,9 @@ class DualNBackGame {
     endSession() {
         this.pauseGame();
         
+        // Track study data if enrolled
+        this.trackStudyData();
+        
         // Use the actual match counts from sequence generation
         const availablePositionMatches = this.actualPositionMatches || Math.ceil(Math.floor(this.trialsPerSession * 2 / 3) / 2);
         const availableLetterMatches = this.actualLetterMatches || Math.floor(Math.floor(this.trialsPerSession * 2 / 3) / 2);
@@ -718,6 +687,96 @@ class DualNBackGame {
         this.currentRound = 0;
         this.updateTrialDisplay();
         this.updateScoreDisplays();
+    }
+
+    trackStudyData() {
+        // Check if user is enrolled in study
+        const enrolled = localStorage.getItem('studyEnrolled');
+        if (!enrolled) return;
+        
+        // Get userData from localStorage
+        const userData = localStorage.getItem('studyUserData');
+        if (!userData) return;
+        
+        const userDataObj = JSON.parse(userData);
+        if (!userDataObj.studyData) return;
+        
+        // Calculate session duration
+        const sessionDuration = this.sessionStartTime ? Date.now() - this.sessionStartTime : 0;
+        
+        // Create session data with game performance metrics
+        const sessionData = {
+            timestamp: new Date().toISOString(),
+            sessionDuration: sessionDuration,
+            nBackLevel: this.nBack,
+            gameMode: this.gameMode,
+            trialsCompleted: this.currentTrial,
+            totalTrials: this.trialsPerSession,
+            positionCorrect: this.positionCorrect,
+            positionTotal: this.positionTotal,
+            letterCorrect: this.letterCorrect,
+            letterTotal: this.letterTotal,
+            totalScore: this.score,
+            positionAccuracy: this.positionTotal > 0 ? (this.positionCorrect / this.positionTotal * 100).toFixed(1) : 0,
+            letterAccuracy: this.letterTotal > 0 ? (this.letterCorrect / this.letterTotal * 100).toFixed(1) : 0,
+            overallAccuracy: (this.positionTotal + this.letterTotal) > 0 ? 
+                ((this.positionCorrect + this.letterCorrect) / (this.positionTotal + this.letterTotal) * 100).toFixed(1) : 0
+        };
+        
+        // Add session to userData.studyData.sessions array
+        if (!userDataObj.studyData.sessions) {
+            userDataObj.studyData.sessions = [];
+        }
+        userDataObj.studyData.sessions.push(sessionData);
+        
+        // Keep only last 100 sessions
+        if (userDataObj.studyData.sessions.length > 100) {
+            userDataObj.studyData.sessions = userDataObj.studyData.sessions.slice(-100);
+        }
+        
+        // Save back to localStorage
+        localStorage.setItem('studyUserData', JSON.stringify(userDataObj));
+        
+        // Update leaderboard
+        this.updateLeaderboard(userDataObj.participantId);
+        
+        console.log('Study data tracked:', sessionData);
+    }
+    
+    updateLeaderboard(username) {
+        if (!username) return;
+        
+        // Get current leaderboard
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+        
+        // Find user entry or create new one
+        const existingIndex = leaderboard.findIndex(entry => entry.username === username);
+        const currentDate = new Date().toISOString();
+        
+        if (existingIndex >= 0) {
+            // Update existing entry with new highest level
+            leaderboard[existingIndex].highestLevel = Math.max(leaderboard[existingIndex].highestLevel, this.nBack);
+            leaderboard[existingIndex].lastPlayed = currentDate;
+        } else {
+            // Add new entry
+            leaderboard.push({
+                username: username,
+                highestLevel: this.nBack,
+                lastPlayed: currentDate,
+                joinedDate: currentDate
+            });
+        }
+        
+        // Sort by highest level (descending), then by last played (most recent first)
+        leaderboard.sort((a, b) => {
+            if (b.highestLevel !== a.highestLevel) {
+                return b.highestLevel - a.highestLevel;
+            }
+            return new Date(b.lastPlayed) - new Date(a.lastPlayed);
+        });
+        
+        // Save updated leaderboard
+        localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
     }
 }
 

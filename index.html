@@ -13,10 +13,11 @@
 </head>
 <body>
     <div class="top-bar">
-        <div class="domain-name">
+        <a href="/" class="domain-name">
             <img src="favicon.svg" alt="UltimateBrain.io Logo" class="logo-icon">
             UltimateBrain.io
-        </div>
+        </a>
+        <a href="study-enrollment.html" class="study-link">Join Study</a>
     </div>
     <div id="game-container">
         <h1>Welcome to the ultimate brain training experience</h1>
@@ -95,7 +96,9 @@
         <div class="cta-section">
             <h3>Ready to level up your brain game?</h3>
             <p>Start your first session today — results begin with just 10 minutes a day.</p>
-            
+            <div class="cta-buttons">
+                <a href="leaderboard.html" class="leaderboard-btn">View Leaderboard</a>
+            </div>
         </div>
     </div>
 
@@ -168,6 +171,12 @@
                 <h3>Breathing Exercises</h3>
                 <p>Natural techniques to increase mental energy, enhance focus, and improve cognitive performance through optimized breathing patterns.</p>
                 <a href="breathing-exercises.html" class="supplement-link">Learn More →</a>
+            </div>
+            
+            <div class="supplement-card">
+                <h3>Sleep & Pineal Peptides</h3>
+                <p>Optimize deep restorative sleep and circadian rhythms with pineal peptides that enhance melatonin production and support cognitive recovery.</p>
+                <a href="sleep-pineal-peptides.html" class="supplement-link">Learn More →</a>
             </div>
         </div>
         
@@ -245,6 +254,14 @@
             
             lastScrollTop = scrollTop;
         });
+        
+        // Check if enrolled and show dashboard link
+        const enrolled = localStorage.getItem('studyEnrolled');
+        if (enrolled) {
+            const studyLink = document.querySelector('.study-link');
+            studyLink.textContent = 'Dashboard';
+            studyLink.href = 'study-dashboard.html';
+        }
     </script>
 </body>
 </html>

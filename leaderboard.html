@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - UltimateBrain.io</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .leaderboard-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        .leaderboard-table {
+            width: 100%;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .leaderboard-header {
+            background-color: #2552a3;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .leaderboard-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            color: #2552a3;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .rank {
+            font-weight: bold;
+            color: #2552a3;
+            font-size: 1.2em;
+        }
+        
+        .rank-1 {
+            color: #FFD700;
+            font-size: 1.4em;
+        }
+        
+        .rank-2 {
+            color: #C0C0C0;
+            font-size: 1.3em;
+        }
+        
+        .rank-3 {
+            color: #CD7F32;
+            font-size: 1.3em;
+        }
+        
+        .username {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .level {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ea6a4b;
+        }
+        
+        .user-highlight {
+            background-color: #fff4e6;
+            font-weight: bold;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        
+        .stat-box {
+            flex: 1;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2552a3;
+        }
+        
+        .filter-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .filter-btn {
+            background-color: #e9ecef;
+            color: #333;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active {
+            background-color: #2552a3;
+            color: white;
+        }
+        
+        .filter-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .country-flag {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/" class="domain-name">
+            <img src="favicon.svg" alt="UltimateBrain.io Logo" class="logo-icon">
+            UltimateBrain.io
+        </a>
+        <a href="/" class="study-link">Back to Training</a>
+    </div>
+
+    <div id="game-container">
+        <h1>Global Leaderboard</h1>
+        <p class="tagline">See how you rank among cognitive champions</p>
+        
+        <div class="leaderboard-container">
+            <div class="stats-row" id="user-stats">
+                <!-- User stats will be displayed here -->
+            </div>
+            
+            <div class="filter-section">
+                <button class="filter-btn active" onclick="filterLeaderboard('all')">All Time</button>
+                <button class="filter-btn" onclick="filterLeaderboard('week')">This Week</button>
+                <button class="filter-btn" onclick="filterLeaderboard('today')">Today</button>
+                
+                <div class="location-filters">
+                    <button class="location-filter-btn" onclick="filterByLocation('all')">🌍 All Countries</button>
+                    <button class="location-filter-btn" onclick="filterByLocation('country')">🏳️ My Country</button>
+                </div>
+            </div>
+            
+            <div class="leaderboard-table">
+                <div class="leaderboard-header">
+                    <h2>Top Players</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 10%; text-align: center;">Rank</th>
+                            <th style="width: 40%;">Player</th>
+                            <th style="width: 20%; text-align: center;">Highest Level</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- Leaderboard entries will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'all';
+        let currentLocationFilter = 'all';
+        let allLeaderboardData = [];
+        
+        // Country code to flag emoji mapping
+        const countryFlags = {
+            'US': '🇺🇸', 'GB': '🇬🇧', 'CA': '🇨🇦', 'AU': '🇦🇺', 'DE': '🇩🇪',
+            'FR': '🇫🇷', 'IT': '🇮🇹', 'ES': '🇪🇸', 'NL': '🇳🇱', 'SE': '🇸🇪',
+            'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮', 'PL': '🇵🇱', 'BR': '🇧🇷',
+            'MX': '🇲🇽', 'AR': '🇦🇷', 'IN': '🇮🇳', 'CN': '🇨🇳', 'JP': '🇯🇵',
+            'KR': '🇰🇷', 'SG': '🇸🇬', 'NZ': '🇳🇿', 'ZA': '🇿🇦', 'CH': '🇨🇭',
+            'AT': '🇦🇹', 'BE': '🇧🇪', 'IE': '🇮🇪', 'PT': '🇵🇹', 'GR': '🇬🇷',
+            'RU': '🇷🇺', 'TR': '🇹🇷', 'IL': '🇮🇱', 'AE': '🇦🇪', 'SA': '🇸🇦',
+            'EG': '🇪🇬', 'TH': '🇹🇭', 'MY': '🇲🇾', 'ID': '🇮🇩', 'PH': '🇵🇭',
+            'VN': '🇻🇳', 'HK': '🇭🇰', 'TW': '🇹🇼', 'CL': '🇨🇱', 'CO': '🇨🇴',
+            'PE': '🇵🇪', 'VE': '🇻🇪', 'UA': '🇺🇦', 'CZ': '🇨🇿', 'HU': '🇭🇺',
+            'RO': '🇷🇴', 'BG': '🇧🇬', 'HR': '🇭🇷', 'RS': '🇷🇸', 'SK': '🇸🇰',
+            'SI': '🇸🇮', 'LT': '🇱🇹', 'LV': '🇱🇻', 'EE': '🇪🇪', 'IS': '🇮🇸',
+            'LU': '🇱🇺', 'MT': '🇲🇹', 'CY': '🇨🇾', 'OTHER': '🌍'
+        };
+        
+        // Initialize leaderboard
+        loadLeaderboard();
+        
+        function loadLeaderboard() {
+            // Get all leaderboard data from localStorage
+            const leaderboardData = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+            allLeaderboardData = leaderboardData;
+            
+            // Get current user data
+            const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+            const currentUsername = userData.participantId || null;
+            
+            // If user is enrolled and has sessions, add/update their entry
+            if (currentUsername && userData.studyData && userData.studyData.sessions) {
+                updateUserInLeaderboard(currentUsername, userData.studyData.sessions);
+            }
+            
+            // Display user stats if enrolled
+            if (currentUsername) {
+                displayUserStats(currentUsername);
+            }
+            
+            // Display leaderboard
+            displayLeaderboard(currentFilter);
+        }
+        
+        function updateUserInLeaderboard(username, sessions) {
+            if (!sessions || sessions.length === 0) return;
+            
+            // Calculate highest level achieved
+            const highestLevel = Math.max(...sessions.map(s => s.nBackLevel || 2));
+            const lastPlayed = new Date().toISOString();
+            
+            // Get current leaderboard
+            let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+            
+            // Find user entry or create new one
+            const existingIndex = leaderboard.findIndex(entry => entry.username === username);
+            
+            if (existingIndex >= 0) {
+                // Update existing entry
+                leaderboard[existingIndex].highestLevel = Math.max(leaderboard[existingIndex].highestLevel, highestLevel);
+                leaderboard[existingIndex].lastPlayed = lastPlayed;
+            } else {
+                // Get user data for country and workplace
+                const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+                
+                // Add new entry
+                leaderboard.push({
+                    username: username,
+                    highestLevel: highestLevel,
+                    lastPlayed: lastPlayed,
+                    joinedDate: new Date().toISOString(),
+                    country: userData.country || 'OTHER',
+                });
+            }
+            
+            // Sort by highest level (descending)
+            leaderboard.sort((a, b) => b.highestLevel - a.highestLevel);
+            
+            // Save updated leaderboard
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            allLeaderboardData = leaderboard;
+        }
+        
+        function displayUserStats(username) {
+            const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+            const userEntry = leaderboard.find(entry => entry.username === username);
+            
+            if (!userEntry) {
+                document.getElementById('user-stats').innerHTML = `
+                    <div class="stat-box">
+                        <div class="stat-label">Start playing to see your rank!</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const userRank = leaderboard.findIndex(entry => entry.username === username) + 1;
+            const totalPlayers = leaderboard.length;
+            
+            document.getElementById('user-stats').innerHTML = `
+                <div class="stat-box">
+                    <div class="stat-label">Your Rank</div>
+                    <div class="stat-value">#${userRank}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Your Highest Level</div>
+                    <div class="stat-value">${userEntry.highestLevel}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Players</div>
+                    <div class="stat-value">${totalPlayers}</div>
+                </div>
+            `;
+        }
+        
+        function displayLeaderboard(filter) {
+            const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+            const currentUsername = userData.participantId || null;
+            
+            let filteredData = [...allLeaderboardData];
+            
+            // Apply time filter
+            const now = new Date();
+            if (filter === 'week') {
+                const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+                filteredData = filteredData.filter(entry => new Date(entry.lastPlayed) > weekAgo);
+            } else if (filter === 'today') {
+                const today = new Date(now.toDateString());
+                filteredData = filteredData.filter(entry => new Date(entry.lastPlayed) > today);
+            }
+            
+            const tbody = document.getElementById('leaderboard-body');
+            
+            // Apply location filter
+            if (currentLocationFilter !== 'all') {
+                const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+                
+                if (currentLocationFilter === 'country' && userData.country) {
+                    filteredData = filteredData.filter(entry => entry.country === userData.country);
+                }
+            }
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="no-data">No players found for this filter. Be the first!</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Display top 50 players
+            tbody.innerHTML = filteredData.slice(0, 50).map((entry, index) => {
+                const rank = index + 1;
+                const rankClass = rank <= 3 ? `rank-${rank}` : '';
+                const isCurrentUser = entry.username === currentUsername;
+                
+                const countryFlag = countryFlags[entry.country] || countryFlags['OTHER'];
+                
+                return `
+                    <tr class="${isCurrentUser ? 'user-highlight' : ''}">
+                        <td style="text-align: center;">
+                            <span class="rank ${rankClass}">${rank}</span>
+                        </td>
+                        <td>
+                            <span class="country-flag">${countryFlag}</span>
+                            <span class="username">${entry.username}${isCurrentUser ? ' (You)' : ''}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="level">${entry.highestLevel}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function filterLeaderboard(filter) {
+            currentFilter = filter;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Display filtered leaderboard
+            displayLeaderboard(filter);
+        }
+        
+        function filterByLocation(location) {
+            currentLocationFilter = location;
+            
+            // Update active button
+            document.querySelectorAll('.location-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Display filtered leaderboard
+            displayLeaderboard(currentFilter);
+        }
+        
+        // Add some demo data if leaderboard is empty (remove this in production)
+        if (allLeaderboardData.length === 0) {
+            const demoData = [
+                { username: "CognitiveMaster", highestLevel: 8, lastPlayed: new Date().toISOString(), country: "US" },
+                { username: "BrainTrainer42", highestLevel: 7, lastPlayed: new Date().toISOString(), country: "GB" },
+                { username: "MemoryChamp", highestLevel: 7, lastPlayed: new Date(Date.now() - 24*60*60*1000).toISOString(), country: "CA" },
+                { username: "NeuralNinja", highestLevel: 6, lastPlayed: new Date().toISOString(), country: "JP" },
+                { username: "FocusWarrior", highestLevel: 6, lastPlayed: new Date(Date.now() - 2*24*60*60*1000).toISOString(), country: "DE" },
+                { username: "MindAthlete", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "AU" },
+                { username: "ThinkFast", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "SE" },
+                { username: "Synaptic", highestLevel: 4, lastPlayed: new Date(Date.now() - 3*24*60*60*1000).toISOString(), country: "FR" }
+            ];
+            localStorage.setItem('leaderboard', JSON.stringify(demoData));
+            loadLeaderboard();
+        }
+    </script>
+</body>
+</html>
