@@ -79,6 +79,9 @@ class DualNBackGame {
     }
 
     startGame() {
+        // Initialize audio context on user interaction (required for iOS)
+        this.initAudioContext();
+        
         this.isPlaying = true;
         this.sessionStartTime = Date.now();
         this.generateSequenceWithMatches();
@@ -292,16 +295,45 @@ class DualNBackGame {
     }
 
     initAudio() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Initialize AudioContext only after user interaction on iOS
+        this.audioContextInitialized = false;
+        this.voicesLoaded = false;
         
         // Initialize speech synthesis voices
         if ('speechSynthesis' in window) {
+            this.loadVoices();
             // Load voices if not already loaded
             if (window.speechSynthesis.getVoices().length === 0) {
                 window.speechSynthesis.addEventListener('voiceschanged', () => {
-                    // Voices are now loaded
+                    this.loadVoices();
                 });
             }
+        }
+    }
+
+    initAudioContext() {
+        if (this.audioContextInitialized) return;
+        
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Resume AudioContext if suspended (required for iOS)
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
+            
+            this.audioContextInitialized = true;
+        } catch (error) {
+            console.warn('AudioContext initialization failed:', error);
+        }
+    }
+
+    loadVoices() {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            this.availableVoices = voices;
+            this.voicesLoaded = true;
+            console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
         }
     }
 
@@ -323,21 +355,10 @@ class DualNBackGame {
             const letterName = letterNames[letter] || letter;
             const utterance = new SpeechSynthesisUtterance(letterName);
             
-            // Set female voice
-            const voices = window.speechSynthesis.getVoices();
-            const femaleVoice = voices.find(voice => 
-                voice.name.toLowerCase().includes('female') || 
-                voice.name.toLowerCase().includes('woman') ||
-                voice.name.toLowerCase().includes('samantha') ||
-                voice.name.toLowerCase().includes('alex') ||
-                voice.name.toLowerCase().includes('karen') ||
-                voice.name.toLowerCase().includes('susan') ||
-                voice.name.toLowerCase().includes('victoria') ||
-                voice.name.toLowerCase().includes('zira')
-            );
-            
-            if (femaleVoice) {
-                utterance.voice = femaleVoice;
+            // Get the best available voice for this platform
+            const selectedVoice = this.selectBestVoice();
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
             }
             
             utterance.rate = 0.9;
@@ -346,6 +367,88 @@ class DualNBackGame {
             
             window.speechSynthesis.speak(utterance);
         }
+    }
+
+    selectBestVoice() {
+        if (!this.voicesLoaded || !this.availableVoices) {
+            // Fallback: get voices synchronously
+            this.availableVoices = window.speechSynthesis.getVoices();
+        }
+        
+        if (!this.availableVoices || this.availableVoices.length === 0) {
+            return null;
+        }
+        
+        // Platform detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        const isMac = /Mac/.test(navigator.platform);
+        const isWindows = /Win/.test(navigator.platform);
+        
+        // English voices only
+        const englishVoices = this.availableVoices.filter(voice => 
+            voice.lang.startsWith('en-')
+        );
+        
+        if (englishVoices.length === 0) {
+            return this.availableVoices[0]; // Fallback to any voice
+        }
+        
+        let preferredVoice = null;
+        
+        if (isIOS) {
+            // iOS voice preferences
+            preferredVoice = englishVoices.find(voice => 
+                voice.name.includes('Samantha') || 
+                voice.name.includes('Karen') || 
+                voice.name.includes('Susan')
+            ) || englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('female')
+            );
+        } else if (isAndroid) {
+            // Android voice preferences
+            preferredVoice = englishVoices.find(voice => 
+                voice.name.includes('Google') && voice.name.toLowerCase().includes('female')
+            ) || englishVoices.find(voice => 
+                voice.name.includes('Samsung') && voice.name.toLowerCase().includes('female')
+            ) || englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('female')
+            ) || englishVoices.find(voice => 
+                voice.name.includes('Google')
+            );
+        } else if (isMac) {
+            // macOS voice preferences
+            preferredVoice = englishVoices.find(voice => 
+                voice.name.includes('Samantha') || 
+                voice.name.includes('Alex') || 
+                voice.name.includes('Karen') || 
+                voice.name.includes('Susan')
+            );
+        } else if (isWindows) {
+            // Windows voice preferences
+            preferredVoice = englishVoices.find(voice => 
+                voice.name.includes('Zira') || 
+                voice.name.includes('Hazel') || 
+                voice.name.toLowerCase().includes('female')
+            );
+        }
+        
+        // Fallback: prefer any female voice
+        if (!preferredVoice) {
+            preferredVoice = englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('female') || 
+                voice.name.toLowerCase().includes('woman')
+            );
+        }
+        
+        // Final fallback: first English voice or any voice
+        const finalVoice = preferredVoice || englishVoices[0] || this.availableVoices[0];
+        
+        if (finalVoice) {
+            console.log(`Selected voice: ${finalVoice.name} (${finalVoice.lang})`);
+        }
+        
+        return finalVoice;
     }
 
     handleKeyPress(e) {
