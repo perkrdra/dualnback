@@ -385,12 +385,20 @@ class DualNBackGame {
         const isMac = /Mac/.test(navigator.platform);
         const isWindows = /Win/.test(navigator.platform);
         
-        // English voices only
-        const englishVoices = this.availableVoices.filter(voice => 
-            voice.lang.startsWith('en-')
+        // Log all available voices for debugging
+        console.log('All available voices:', this.availableVoices.map(v => `${v.name} (${v.lang})`));
+        
+        // English voices only - be more aggressive on Samsung devices
+        let englishVoices = this.availableVoices.filter(voice => 
+            voice.lang.startsWith('en-') || 
+            voice.lang === 'en' ||
+            (voice.name.toLowerCase().includes('english') && !voice.name.toLowerCase().includes('norwegian'))
         );
         
+        console.log('Filtered English voices:', englishVoices.map(v => `${v.name} (${v.lang})`));
+        
         if (englishVoices.length === 0) {
+            console.warn('No English voices found, using fallback');
             return this.availableVoices[0]; // Fallback to any voice
         }
         
@@ -406,15 +414,21 @@ class DualNBackGame {
                 voice.name.toLowerCase().includes('female')
             );
         } else if (isAndroid) {
-            // Android voice preferences
+            // Android voice preferences - prioritize English voices more aggressively
             preferredVoice = englishVoices.find(voice => 
                 voice.name.includes('Google') && voice.name.toLowerCase().includes('female')
             ) || englishVoices.find(voice => 
                 voice.name.includes('Samsung') && voice.name.toLowerCase().includes('female')
             ) || englishVoices.find(voice => 
+                voice.name.includes('Google') && voice.lang.startsWith('en-')
+            ) || englishVoices.find(voice => 
+                voice.name.includes('Samsung') && voice.lang.startsWith('en-')
+            ) || englishVoices.find(voice => 
                 voice.name.toLowerCase().includes('female')
             ) || englishVoices.find(voice => 
                 voice.name.includes('Google')
+            ) || englishVoices.find(voice =>
+                voice.lang === 'en-US' || voice.lang === 'en-GB'
             );
         } else if (isMac) {
             // macOS voice preferences
