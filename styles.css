@@ -164,14 +164,14 @@ body {
 
 #response-buttons {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     gap: 10px;
     margin-top: 20px;
 }
 
 #response-buttons button {
-    flex: 1;
-    max-width: 200px;
+    width: 330px;
 }
 
 .response-btn {
