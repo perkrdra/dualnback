@@ -298,6 +298,8 @@
                                 <th>Gender</th>
                                 <th>Education</th>
                                 <th>Sessions</th>
+                                <th>N-Back Level</th>
+                                <th>Total Score</th>
                                 <th>Last Activity</th>
                                 <th>Actions</th>
                             </tr>
@@ -310,6 +312,7 @@
         </div>
     </div>
 
+    <script src="data-manager.js"></script>
     <script>
         // Admin credentials (in production, this should be server-side)
         const ADMIN_CREDENTIALS = {
@@ -357,35 +360,54 @@
             loadParticipantData();
         }
 
-        function loadParticipantData() {
+        async function loadParticipantData() {
             const participants = [];
             let totalSessions = 0;
             let activeParticipants = 0;
             const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-            // Scan localStorage for participant data
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key === 'studyUserData') {
+            // Load all participants from server (with localStorage fallback)
+            let allParticipantsData = {};
+            if (window.dataManager) {
+                try {
+                    allParticipantsData = await window.dataManager.loadAllParticipants();
+                    console.log('Loaded participant data from server');
+                } catch (error) {
+                    console.error('Error loading from server:', error);
+                }
+            }
+
+            // Process participant data
+            for (const [participantId, userData] of Object.entries(allParticipantsData)) {
+                if (userData && userData.participantId) {
                     try {
-                        const userData = JSON.parse(localStorage.getItem(key));
-                        if (userData && userData.participantId) {
-                            const sessions = userData.studyData?.sessions || [];
-                            totalSessions += sessions.length;
-                            
-                            // Check if active (has sessions in last week)
-                            const hasRecentActivity = sessions.some(session => 
-                                new Date(session.timestamp) > oneWeekAgo
-                            );
-                            if (hasRecentActivity) activeParticipants++;
-                            
-                            participants.push({
-                                ...userData,
-                                sessionCount: sessions.length,
-                                lastActivity: sessions.length > 0 ? 
-                                    sessions[sessions.length - 1].timestamp : userData.enrollmentDate
-                            });
-                        }
+                        const sessions = userData.studyData?.sessions || [];
+                        totalSessions += sessions.length;
+                        
+                        // Check if active (has sessions in last week)
+                        const hasRecentActivity = sessions.some(session => 
+                            new Date(session.timestamp) > oneWeekAgo
+                        );
+                        if (hasRecentActivity) activeParticipants++;
+                        
+                        // Calculate highest N-Back level achieved
+                        const maxNBackLevel = sessions.length > 0 ? 
+                            Math.max(...sessions.map(s => s.nBackLevel || 1)) : 1;
+                        
+                        // Calculate total score from all sessions
+                        const totalScore = sessions.reduce((sum, session) => {
+                            const sessionScore = ((session.positionAccuracy || 0) + (session.letterAccuracy || 0)) / 2;
+                            return sum + sessionScore;
+                        }, 0);
+                        
+                        participants.push({
+                            ...userData,
+                            sessionCount: sessions.length,
+                            maxNBackLevel,
+                            totalScore: Math.round(totalScore),
+                            lastActivity: sessions.length > 0 ? 
+                                sessions[sessions.length - 1].timestamp : userData.enrollmentDate
+                        });
                     } catch (e) {
                         console.error('Error parsing participant data:', e);
                     }
@@ -421,6 +443,8 @@
                     <td>${participant.gender}</td>
                     <td>${participant.education}</td>
                     <td>${participant.sessionCount}</td>
+                    <td>${participant.maxNBackLevel}</td>
+                    <td>${participant.totalScore}</td>
                     <td>${lastActivity}</td>
                     <td>
                         <button class="expand-btn" onclick="toggleParticipantDetails(${index})">
@@ -435,7 +459,7 @@
                 detailsRow.className = 'participant-details';
                 detailsRow.id = `details-${index}`;
                 detailsRow.innerHTML = `
-                    <td colspan="8">
+                    <td colspan="10">
                         <div>
                             <h4>Participant Details</h4>
                             <p><strong>Enrollment Date:</strong> ${new Date(participant.enrollmentDate).toLocaleDateString()}</p>
@@ -505,7 +529,7 @@
         function exportToCSV() {
             if (!window.participantData) return;
 
-            const headers = ['ParticipantID', 'Country', 'Age', 'Gender', 'Education', 'Workplace', 'Email', 'EnrollmentDate', 'SessionCount', 'LastActivity'];
+            const headers = ['ParticipantID', 'Country', 'Age', 'Gender', 'Education', 'Workplace', 'Email', 'EnrollmentDate', 'SessionCount', 'MaxNBackLevel', 'TotalScore', 'LastActivity'];
             const csvContent = [
                 headers.join(','),
                 ...window.participantData.map(p => [
@@ -518,6 +542,8 @@
                     p.email || '',
                     p.enrollmentDate,
                     p.sessionCount,
+                    p.maxNBackLevel,
+                    p.totalScore,
                     p.lastActivity
                 ].join(','))
             ].join('\n');

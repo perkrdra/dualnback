@@ -22,6 +22,14 @@ class DualNBackGame {
         this.letterTotal = 0;
         this.actualPositionMatches = 0;
         this.actualLetterMatches = 0;
+        
+        // Clockwise pattern for letter mode (3x3 grid)
+        // 0 → 1 → 2
+        // ↓       ↓
+        // 3   4   5
+        // ↓       ↓
+        // 6 ← 7 ← 8
+        this.clockwisePattern = [0, 1, 2, 5, 8, 7, 6, 3, 4];
 
         this.gridContainer = document.getElementById('grid-container');
         this.startBtn = document.getElementById('start-btn');
@@ -84,6 +92,9 @@ class DualNBackGame {
         
         this.isPlaying = true;
         this.sessionStartTime = Date.now();
+        this.currentRound = 0;
+        this.currentTrial = 0;
+        
         this.generateSequenceWithMatches();
         this.interval = setInterval(() => this.nextRound(), 3000);
         this.startBtn.disabled = true;
@@ -161,10 +172,20 @@ class DualNBackGame {
                 break;
         }
         
-        // First, generate random sequence
+        // First, generate sequence
         for (let i = 0; i < totalRounds; i++) {
+            let position;
+            
+            if (this.gameMode === 'letter') {
+                // In letter mode, use clockwise pattern
+                position = this.clockwisePattern[i % this.clockwisePattern.length];
+            } else {
+                // In other modes, use random positions
+                position = Math.floor(Math.random() * (this.gridSize * this.gridSize));
+            }
+            
             this.sequence.push({
-                position: Math.floor(Math.random() * (this.gridSize * this.gridSize)),
+                position: position,
                 letter: this.letters[Math.floor(Math.random() * this.letters.length)]
             });
         }
@@ -189,9 +210,25 @@ class DualNBackGame {
         let positionCount = 0;
         for (let i = 0; i < matchableRounds.length && positionCount < positionMatches; i++) {
             const round = matchableRounds[i];
-            this.sequence[round].position = this.sequence[round - this.nBack].position;
-            positionMatchRounds.add(round);
-            positionCount++;
+            
+            if (this.gameMode === 'letter') {
+                // In letter mode, positions follow clockwise pattern
+                // Check if current position naturally matches n-back position
+                const currentPatternIndex = round % this.clockwisePattern.length;
+                const nBackPatternIndex = (round - this.nBack) % this.clockwisePattern.length;
+                
+                if (this.clockwisePattern[currentPatternIndex] === this.clockwisePattern[nBackPatternIndex]) {
+                    // Natural match due to pattern repetition
+                    positionMatchRounds.add(round);
+                    positionCount++;
+                }
+                // If no natural match, we can't force one without breaking the clockwise pattern
+            } else {
+                // In other modes, directly set position match
+                this.sequence[round].position = this.sequence[round - this.nBack].position;
+                positionMatchRounds.add(round);
+                positionCount++;
+            }
         }
         
         // Force letter matches (on different rounds to avoid overlap)
@@ -212,8 +249,12 @@ class DualNBackGame {
             
             // If this round should NOT have a position match but does
             if (!positionMatchRounds.has(i) && current.position === nBackAgo.position) {
-                // Change position to avoid match
-                current.position = (current.position + 1) % (this.gridSize * this.gridSize);
+                if (this.gameMode !== 'letter') {
+                    // Change position to avoid match (only in non-letter modes)
+                    current.position = (current.position + 1) % (this.gridSize * this.gridSize);
+                }
+                // In letter mode, we can't change position due to clockwise pattern
+                // So accidental matches may occur naturally due to pattern repetition
             }
             
             // If this round should NOT have a letter match but does
@@ -340,6 +381,9 @@ class DualNBackGame {
     playSound(letter) {
         // Use Web Speech API to read the letter name aloud
         if ('speechSynthesis' in window) {
+            // Initialize audio context on user interaction (iOS requirement)
+            this.initAudioContext();
+            
             // Cancel any ongoing speech
             window.speechSynthesis.cancel();
             
@@ -414,21 +458,35 @@ class DualNBackGame {
                 voice.name.toLowerCase().includes('female')
             );
         } else if (isAndroid) {
-            // Android voice preferences - prioritize English voices more aggressively
+            // Android voice preferences - prioritize high-quality voices
+            // Priority order: Google > Samsung > others
             preferredVoice = englishVoices.find(voice => 
-                voice.name.includes('Google') && voice.name.toLowerCase().includes('female')
-            ) || englishVoices.find(voice => 
-                voice.name.includes('Samsung') && voice.name.toLowerCase().includes('female')
-            ) || englishVoices.find(voice => 
-                voice.name.includes('Google') && voice.lang.startsWith('en-')
-            ) || englishVoices.find(voice => 
-                voice.name.includes('Samsung') && voice.lang.startsWith('en-')
-            ) || englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('google') && 
+                voice.name.toLowerCase().includes('us') &&
                 voice.name.toLowerCase().includes('female')
             ) || englishVoices.find(voice => 
-                voice.name.includes('Google')
+                voice.name.toLowerCase().includes('google') && 
+                voice.name.toLowerCase().includes('uk') &&
+                voice.name.toLowerCase().includes('female')
+            ) || englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('google') && 
+                voice.lang === 'en-US'
+            ) || englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('google') && 
+                voice.lang === 'en-GB'
+            ) || englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('samsung') && 
+                voice.name.toLowerCase().includes('female') &&
+                voice.lang.startsWith('en-')
+            ) || englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('samsung') && 
+                voice.lang === 'en-US'
+            ) || englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('google')
             ) || englishVoices.find(voice =>
-                voice.lang === 'en-US' || voice.lang === 'en-GB'
+                voice.lang === 'en-US'
+            ) || englishVoices.find(voice =>
+                voice.lang === 'en-GB'
             );
         } else if (isMac) {
             // macOS voice preferences
@@ -459,7 +517,11 @@ class DualNBackGame {
         const finalVoice = preferredVoice || englishVoices[0] || this.availableVoices[0];
         
         if (finalVoice) {
-            console.log(`Selected voice: ${finalVoice.name} (${finalVoice.lang})`);
+            const platform = isIOS ? 'iOS' : isAndroid ? 'Android' : isMac ? 'macOS' : isWindows ? 'Windows' : 'Unknown';
+            console.log(`[${platform}] Selected voice: ${finalVoice.name} (${finalVoice.lang})`);
+            console.log(`Voice details:`, finalVoice);
+        } else {
+            console.warn('No voice could be selected!');
         }
         
         return finalVoice;
@@ -746,11 +808,11 @@ class DualNBackGame {
         }
     }
 
-    endSession() {
+    async endSession() {
         this.pauseGame();
         
         // Track study data if enrolled
-        this.trackStudyData();
+        await this.trackStudyData();
         
         // Use the actual match counts from sequence generation
         const availablePositionMatches = this.actualPositionMatches || Math.ceil(Math.floor(this.trialsPerSession * 2 / 3) / 2);
@@ -806,12 +868,12 @@ class DualNBackGame {
         this.updateScoreDisplays();
     }
 
-    trackStudyData() {
+    async trackStudyData() {
         // Check if user is enrolled in study
         const enrolled = localStorage.getItem('studyEnrolled');
         if (!enrolled) return;
         
-        // Get userData from localStorage
+        // Get userData from localStorage (fallback)
         const userData = localStorage.getItem('studyUserData');
         if (!userData) return;
         
@@ -846,18 +908,25 @@ class DualNBackGame {
         }
         userDataObj.studyData.sessions.push(sessionData);
         
-        // Keep only last 100 sessions
-        if (userDataObj.studyData.sessions.length > 100) {
-            userDataObj.studyData.sessions = userDataObj.studyData.sessions.slice(-100);
+        // Save session to server (with localStorage fallback)
+        if (window.dataManager) {
+            const success = await window.dataManager.saveSession(userDataObj.participantId, sessionData);
+            if (success) {
+                console.log('Study data tracked:', sessionData);
+            }
+        } else {
+            // Fallback: keep only last 100 sessions
+            if (userDataObj.studyData.sessions.length > 100) {
+                userDataObj.studyData.sessions = userDataObj.studyData.sessions.slice(-100);
+            }
+            
+            // Save back to localStorage
+            localStorage.setItem('studyUserData', JSON.stringify(userDataObj));
+            console.log('Study data tracked (localStorage fallback):', sessionData);
         }
-        
-        // Save back to localStorage
-        localStorage.setItem('studyUserData', JSON.stringify(userDataObj));
         
         // Update leaderboard
         this.updateLeaderboard(userDataObj.participantId);
-        
-        console.log('Study data tracked:', sessionData);
     }
     
     updateLeaderboard(username) {
@@ -865,6 +934,9 @@ class DualNBackGame {
         
         // Get current leaderboard
         let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+        
+        // Calculate total correct answers for this session
+        const sessionScore = this.positionCorrect + this.letterCorrect;
         
         // Find user entry or create new one
         const existingIndex = leaderboard.findIndex(entry => entry.username === username);
@@ -874,21 +946,45 @@ class DualNBackGame {
             // Update existing entry with new highest level
             leaderboard[existingIndex].highestLevel = Math.max(leaderboard[existingIndex].highestLevel, this.nBack);
             leaderboard[existingIndex].lastPlayed = currentDate;
+            
+            // Track best scores per level
+            if (!leaderboard[existingIndex].bestScores) {
+                leaderboard[existingIndex].bestScores = {};
+            }
+            
+            // Update best score for current level
+            const currentBest = leaderboard[existingIndex].bestScores[this.nBack] || 0;
+            leaderboard[existingIndex].bestScores[this.nBack] = Math.max(currentBest, sessionScore);
         } else {
             // Add new entry
-            leaderboard.push({
+            const newEntry = {
                 username: username,
                 highestLevel: this.nBack,
                 lastPlayed: currentDate,
-                joinedDate: currentDate
-            });
+                joinedDate: currentDate,
+                bestScores: {}
+            };
+            
+            // Set best score for current level
+            newEntry.bestScores[this.nBack] = sessionScore;
+            
+            leaderboard.push(newEntry);
         }
         
-        // Sort by highest level (descending), then by last played (most recent first)
+        // Sort by highest level (descending), then by best score at highest level (descending), then by last played
         leaderboard.sort((a, b) => {
             if (b.highestLevel !== a.highestLevel) {
                 return b.highestLevel - a.highestLevel;
             }
+            
+            // If same highest level, compare best scores at that level
+            const aBestScore = a.bestScores && a.bestScores[a.highestLevel] ? a.bestScores[a.highestLevel] : 0;
+            const bBestScore = b.bestScores && b.bestScores[b.highestLevel] ? b.bestScores[b.highestLevel] : 0;
+            
+            if (bBestScore !== aBestScore) {
+                return bBestScore - aBestScore;
+            }
+            
             return new Date(b.lastPlayed) - new Date(a.lastPlayed);
         });
         

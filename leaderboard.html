@@ -139,27 +139,6 @@
             text-align: center;
         }
         
-        .filter-btn {
-            background-color: #e9ecef;
-            color: #333;
-            padding: 8px 20px;
-            border: none;
-            border-radius: 20px;
-            margin: 0 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        
-        .filter-btn.active {
-            background-color: #2552a3;
-            color: white;
-        }
-        
-        .filter-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
         
         .country-flag {
             font-size: 1.2em;
@@ -186,12 +165,8 @@
             </div>
             
             <div class="filter-section">
-                <button class="filter-btn active" onclick="filterLeaderboard('all')">All Time</button>
-                <button class="filter-btn" onclick="filterLeaderboard('week')">This Week</button>
-                <button class="filter-btn" onclick="filterLeaderboard('today')">Today</button>
-                
                 <div class="location-filters">
-                    <button class="location-filter-btn" onclick="filterByLocation('all')">🌍 All Countries</button>
+                    <button class="location-filter-btn active" onclick="filterByLocation('all')">🌍 All Countries</button>
                     <button class="location-filter-btn" onclick="filterByLocation('country')">🏳️ My Country</button>
                 </div>
             </div>
@@ -204,8 +179,9 @@
                     <thead>
                         <tr>
                             <th style="width: 10%; text-align: center;">Rank</th>
-                            <th style="width: 40%;">Player</th>
+                            <th style="width: 35%;">Player</th>
                             <th style="width: 20%; text-align: center;">Highest Level</th>
+                            <th style="width: 20%; text-align: center;">Best Score</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
@@ -217,7 +193,6 @@
     </div>
 
     <script>
-        let currentFilter = 'all';
         let currentLocationFilter = 'all';
         let allLeaderboardData = [];
         
@@ -261,7 +236,7 @@
             }
             
             // Display leaderboard
-            displayLeaderboard(currentFilter);
+            displayLeaderboard();
         }
         
         function updateUserInLeaderboard(username, sessions) {
@@ -270,6 +245,16 @@
             // Calculate highest level achieved
             const highestLevel = Math.max(...sessions.map(s => s.nBackLevel || 2));
             const lastPlayed = new Date().toISOString();
+            
+            // Calculate best scores per level from sessions
+            const bestScores = {};
+            sessions.forEach(session => {
+                const level = session.nBackLevel || 2;
+                const totalScore = (session.positionCorrect || 0) + (session.letterCorrect || 0);
+                if (!bestScores[level] || totalScore > bestScores[level]) {
+                    bestScores[level] = totalScore;
+                }
+            });
             
             // Get current leaderboard
             let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
@@ -281,6 +266,17 @@
                 // Update existing entry
                 leaderboard[existingIndex].highestLevel = Math.max(leaderboard[existingIndex].highestLevel, highestLevel);
                 leaderboard[existingIndex].lastPlayed = lastPlayed;
+                
+                // Update best scores
+                if (!leaderboard[existingIndex].bestScores) {
+                    leaderboard[existingIndex].bestScores = {};
+                }
+                
+                // Merge best scores
+                Object.keys(bestScores).forEach(level => {
+                    const currentBest = leaderboard[existingIndex].bestScores[level] || 0;
+                    leaderboard[existingIndex].bestScores[level] = Math.max(currentBest, bestScores[level]);
+                });
             } else {
                 // Get user data for country and workplace
                 const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
@@ -292,11 +288,26 @@
                     lastPlayed: lastPlayed,
                     joinedDate: new Date().toISOString(),
                     country: userData.country || 'OTHER',
+                    bestScores: bestScores
                 });
             }
             
-            // Sort by highest level (descending)
-            leaderboard.sort((a, b) => b.highestLevel - a.highestLevel);
+            // Sort by highest level (descending), then by best score at highest level (descending)
+            leaderboard.sort((a, b) => {
+                if (b.highestLevel !== a.highestLevel) {
+                    return b.highestLevel - a.highestLevel;
+                }
+                
+                // If same highest level, compare best scores at that level
+                const aBestScore = a.bestScores && a.bestScores[a.highestLevel] ? a.bestScores[a.highestLevel] : 0;
+                const bBestScore = b.bestScores && b.bestScores[b.highestLevel] ? b.bestScores[b.highestLevel] : 0;
+                
+                if (bBestScore !== aBestScore) {
+                    return bBestScore - aBestScore;
+                }
+                
+                return new Date(b.lastPlayed) - new Date(a.lastPlayed);
+            });
             
             // Save updated leaderboard
             localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
@@ -318,6 +329,9 @@
             
             const userRank = leaderboard.findIndex(entry => entry.username === username) + 1;
             const totalPlayers = leaderboard.length;
+            const bestScore = userEntry.bestScores && userEntry.bestScores[userEntry.highestLevel] 
+                ? userEntry.bestScores[userEntry.highestLevel] 
+                : 'N/A';
             
             document.getElementById('user-stats').innerHTML = `
                 <div class="stat-box">
@@ -329,28 +343,21 @@
                     <div class="stat-value">${userEntry.highestLevel}</div>
                 </div>
                 <div class="stat-box">
+                    <div class="stat-label">Your Best Score</div>
+                    <div class="stat-value">${bestScore}</div>
+                </div>
+                <div class="stat-box">
                     <div class="stat-label">Total Players</div>
                     <div class="stat-value">${totalPlayers}</div>
                 </div>
             `;
         }
         
-        function displayLeaderboard(filter) {
+        function displayLeaderboard() {
             const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
             const currentUsername = userData.participantId || null;
             
             let filteredData = [...allLeaderboardData];
-            
-            // Apply time filter
-            const now = new Date();
-            if (filter === 'week') {
-                const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-                filteredData = filteredData.filter(entry => new Date(entry.lastPlayed) > weekAgo);
-            } else if (filter === 'today') {
-                const today = new Date(now.toDateString());
-                filteredData = filteredData.filter(entry => new Date(entry.lastPlayed) > today);
-            }
-            
             const tbody = document.getElementById('leaderboard-body');
             
             // Apply location filter
@@ -365,7 +372,7 @@
             if (filteredData.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="3" class="no-data">No players found for this filter. Be the first!</td>
+                        <td colspan="4" class="no-data">No players found for this filter. Be the first!</td>
                     </tr>
                 `;
                 return;
@@ -379,6 +386,11 @@
                 
                 const countryFlag = countryFlags[entry.country] || countryFlags['OTHER'];
                 
+                // Get best score at highest level
+                const bestScore = entry.bestScores && entry.bestScores[entry.highestLevel] 
+                    ? entry.bestScores[entry.highestLevel] 
+                    : 'N/A';
+                
                 return `
                     <tr class="${isCurrentUser ? 'user-highlight' : ''}">
                         <td style="text-align: center;">
@@ -391,23 +403,14 @@
                         <td style="text-align: center;">
                             <span class="level">${entry.highestLevel}</span>
                         </td>
+                        <td style="text-align: center;">
+                            <span class="level">${bestScore}</span>
+                        </td>
                     </tr>
                 `;
             }).join('');
         }
         
-        function filterLeaderboard(filter) {
-            currentFilter = filter;
-            
-            // Update active button
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Display filtered leaderboard
-            displayLeaderboard(filter);
-        }
         
         function filterByLocation(location) {
             currentLocationFilter = location;
@@ -419,20 +422,20 @@
             event.target.classList.add('active');
             
             // Display filtered leaderboard
-            displayLeaderboard(currentFilter);
+            displayLeaderboard();
         }
         
         // Add some demo data if leaderboard is empty (remove this in production)
         if (allLeaderboardData.length === 0) {
             const demoData = [
-                { username: "CognitiveMaster", highestLevel: 8, lastPlayed: new Date().toISOString(), country: "US" },
-                { username: "BrainTrainer42", highestLevel: 7, lastPlayed: new Date().toISOString(), country: "GB" },
-                { username: "MemoryChamp", highestLevel: 7, lastPlayed: new Date(Date.now() - 24*60*60*1000).toISOString(), country: "CA" },
-                { username: "NeuralNinja", highestLevel: 6, lastPlayed: new Date().toISOString(), country: "JP" },
-                { username: "FocusWarrior", highestLevel: 6, lastPlayed: new Date(Date.now() - 2*24*60*60*1000).toISOString(), country: "DE" },
-                { username: "MindAthlete", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "AU" },
-                { username: "ThinkFast", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "SE" },
-                { username: "Synaptic", highestLevel: 4, lastPlayed: new Date(Date.now() - 3*24*60*60*1000).toISOString(), country: "FR" }
+                { username: "CognitiveMaster", highestLevel: 8, lastPlayed: new Date().toISOString(), country: "US", bestScores: { 8: 18, 7: 16, 6: 14 } },
+                { username: "BrainTrainer42", highestLevel: 7, lastPlayed: new Date().toISOString(), country: "GB", bestScores: { 7: 17, 6: 15, 5: 13 } },
+                { username: "MemoryChamp", highestLevel: 7, lastPlayed: new Date(Date.now() - 24*60*60*1000).toISOString(), country: "CA", bestScores: { 7: 15, 6: 14, 5: 12 } },
+                { username: "NeuralNinja", highestLevel: 6, lastPlayed: new Date().toISOString(), country: "JP", bestScores: { 6: 16, 5: 14, 4: 12 } },
+                { username: "FocusWarrior", highestLevel: 6, lastPlayed: new Date(Date.now() - 2*24*60*60*1000).toISOString(), country: "DE", bestScores: { 6: 14, 5: 13, 4: 11 } },
+                { username: "MindAthlete", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "AU", bestScores: { 5: 15, 4: 13, 3: 11 } },
+                { username: "ThinkFast", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "SE", bestScores: { 5: 13, 4: 12, 3: 10 } },
+                { username: "Synaptic", highestLevel: 4, lastPlayed: new Date(Date.now() - 3*24*60*60*1000).toISOString(), country: "FR", bestScores: { 4: 14, 3: 12, 2: 10 } }
             ];
             localStorage.setItem('leaderboard', JSON.stringify(demoData));
             loadLeaderboard();
