@@ -127,6 +127,25 @@
         .session-entry:last-child {
             border-bottom: none;
         }
+        
+        .study-scores-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: white;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 20px;
+        }
+        
+        .study-score-entry {
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+            color: #2552a3;
+        }
+        
+        .study-score-entry:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -135,7 +154,10 @@
             <img src="favicon.svg" alt="UltimateBrain.io Logo" class="logo-icon">
             UltimateBrain.io
         </a>
-        <a href="/" class="study-link">Back to Training</a>
+        <div>
+            <a href="/" class="study-link">Back to Training</a>
+            <button id="logout-btn" class="study-link" style="background-color: #dc3545; margin-left: 10px;">Logout</button>
+        </div>
     </div>
 
     <div id="game-container">
@@ -148,20 +170,167 @@
     </div>
 
     <script>
-        // Check if enrolled
-        const enrolled = localStorage.getItem('studyEnrolled');
+        // Check authentication
+        const sessionToken = localStorage.getItem('sessionToken');
         const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
         
-        if (!enrolled || !userData.participantId) {
+        if (!sessionToken || !userData.participantId) {
+            // Not logged in - redirect to login page
             document.getElementById('dashboard-content').innerHTML = `
                 <div class="no-data">
-                    <h2>Not Enrolled</h2>
-                    <p>You need to enroll in the study to access your dashboard.</p>
-                    <a href="study-enrollment.html" class="save-btn" style="display: inline-block; text-decoration: none;">Enroll Now</a>
+                    <h2>Login Required</h2>
+                    <p>Please log in to access your dashboard.</p>
+                    <a href="login.html" class="save-btn" style="display: inline-block; text-decoration: none; margin-right: 10px;">Login</a>
+                    <a href="study-enrollment.html" class="save-btn" style="display: inline-block; text-decoration: none; background-color: #28a745;">New User? Enroll</a>
                 </div>
             `;
         } else {
-            displayDashboard();
+            // Verify session is still valid
+            verifySession().then(isValid => {
+                if (isValid) {
+                    displayDashboard();
+                } else {
+                    // Session expired or invalid
+                    localStorage.removeItem('sessionToken');
+                    localStorage.removeItem('studyUserData');
+                    localStorage.removeItem('studyEnrolled');
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('sessionToken');
+                localStorage.removeItem('studyUserData');
+                localStorage.removeItem('studyEnrolled');
+                window.location.href = '/';
+            }
+        });
+        
+        // Verify session with server (if available)
+        async function verifySession() {
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionToken
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    // Update user data if server has newer version
+                    if (result.userData) {
+                        localStorage.setItem('studyUserData', JSON.stringify(result.userData));
+                    }
+                    return true;
+                }
+                
+                return false;
+            } catch (error) {
+                console.log('Server verification failed, using localStorage fallback');
+                // Fallback: just check if we have basic required data
+                return sessionToken && userData.participantId && userData.password;
+            }
+        }
+        
+        function calculateStudyScores(sessions) {
+            if (sessions.length === 0) {
+                return { studyScores: [], examScore: null, currentStreak: 0 };
+            }
+            
+            // Group sessions by date
+            const sessionsByDate = {};
+            sessions.forEach(session => {
+                const date = new Date(session.timestamp).toDateString();
+                if (!sessionsByDate[date]) {
+                    sessionsByDate[date] = [];
+                }
+                sessionsByDate[date].push(session);
+            });
+            
+            // Get sorted dates
+            const sortedDates = Object.keys(sessionsByDate).sort((a, b) => new Date(a) - new Date(b));
+            
+            // Track consecutive days with 10+ sessions
+            const studyScores = [];
+            let currentStreak = 0;
+            let streakStartDate = null;
+            let consecutiveDays = 0;
+            let examScore = null;
+            
+            // Check each date for 10+ sessions requirement
+            const qualifyingDays = [];
+            for (const date of sortedDates) {
+                if (sessionsByDate[date].length >= 10) {
+                    qualifyingDays.push({
+                        date: new Date(date),
+                        sessionsCount: sessionsByDate[date].length,
+                        averageScore: Math.round(sessionsByDate[date].reduce((sum, s) => sum + (s.totalScore || 0), 0) / sessionsByDate[date].length)
+                    });
+                }
+            }
+            
+            // Process consecutive qualifying days
+            let i = 0;
+            while (i < qualifyingDays.length) {
+                let consecutiveCount = 1;
+                let currentDate = qualifyingDays[i].date;
+                let groupAverageScore = qualifyingDays[i].averageScore;
+                let totalScore = qualifyingDays[i].averageScore;
+                
+                // Count consecutive days
+                while (i + consecutiveCount < qualifyingDays.length) {
+                    const nextDate = qualifyingDays[i + consecutiveCount].date;
+                    const dayDifference = (nextDate - currentDate) / (1000 * 60 * 60 * 24);
+                    
+                    if (dayDifference === consecutiveCount) {
+                        totalScore += qualifyingDays[i + consecutiveCount].averageScore;
+                        consecutiveCount++;
+                        currentDate = nextDate;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Calculate group average score
+                groupAverageScore = Math.round(totalScore / consecutiveCount);
+                
+                // Award study scores for every 5 consecutive days
+                const studyPeriodsCompleted = Math.floor(consecutiveCount / 5);
+                for (let period = 0; period < studyPeriodsCompleted; period++) {
+                    const periodEndDate = new Date(qualifyingDays[i].date);
+                    periodEndDate.setDate(periodEndDate.getDate() + ((period + 1) * 5) - 1);
+                    
+                    studyScores.push({
+                        completedDate: periodEndDate,
+                        score: groupAverageScore,
+                        daysInStreak: (period + 1) * 5
+                    });
+                }
+                
+                // Check for exam score (25 consecutive days)
+                if (consecutiveCount >= 25 && !examScore) {
+                    examScore = groupAverageScore;
+                }
+                
+                // Update current streak if this is the most recent group and includes today or recent days
+                const today = new Date();
+                const lastDayInGroup = new Date(qualifyingDays[i].date);
+                lastDayInGroup.setDate(lastDayInGroup.getDate() + consecutiveCount - 1);
+                const daysSinceLastDay = Math.floor((today - lastDayInGroup) / (1000 * 60 * 60 * 24));
+                
+                if (daysSinceLastDay <= 1) { // If the streak ended today or yesterday
+                    currentStreak = consecutiveCount;
+                }
+                
+                i += consecutiveCount;
+            }
+            
+            return { studyScores, examScore, currentStreak };
         }
         
         function displayDashboard() {
@@ -170,9 +339,12 @@
             
             // Calculate statistics
             const totalSessions = sessions.length;
-            const avgScore = sessions.reduce((sum, s) => sum + (s.totalScore || 0), 0) / (totalSessions || 1);
+            const highestScore = Math.max(...sessions.map(s => s.totalScore || 0), 0);
             const highestLevel = Math.max(...sessions.map(s => s.nBackLevel || 2), 2);
             const totalTime = sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 60000; // Convert to minutes
+            
+            // Calculate study scores and exam score
+            const { studyScores, examScore, currentStreak } = calculateStudyScores(sessions);
             
             const dashboardHTML = `
                 <div class="stats-grid">
@@ -181,8 +353,8 @@
                         <div class="stat-value">${totalSessions}</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Average Score</div>
-                        <div class="stat-value">${Math.round(avgScore)}</div>
+                        <div class="stat-label">Highest Score</div>
+                        <div class="stat-value">${highestScore}</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Highest N-Back</div>
@@ -191,6 +363,16 @@
                     <div class="stat-card">
                         <div class="stat-label">Total Time</div>
                         <div class="stat-value">${Math.round(totalTime)}m</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Study Scores</div>
+                        <div class="stat-value">${studyScores.length}</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${studyScores.length > 0 ? 'Latest: ' + studyScores[studyScores.length - 1].score : 'Complete 5 consecutive days'}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Exam Score</div>
+                        <div class="stat-value">${examScore || 'Not achieved'}</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${examScore ? 'Completed 25 days!' : 'Current streak: ' + currentStreak + '/25'}</div>
                     </div>
                 </div>
                 
@@ -226,13 +408,30 @@
                     <button class="save-btn" onclick="saveSupplements()">Save Supplements</button>
                 </div>
                 
+                ${studyScores.length > 0 ? `
+                <div class="progress-section">
+                    <h2>Study Scores Achieved</h2>
+                    <p>Each study score represents 5 consecutive days of completing 10+ training sessions daily.</p>
+                    <div class="study-scores-list">
+                        ${studyScores.map((score, index) => `
+                            <div class="study-score-entry">
+                                <strong>Study Score #${index + 1}</strong> - 
+                                Score: ${score.score} | 
+                                Completed: ${score.completedDate.toLocaleDateString()} | 
+                                ${score.daysInStreak} consecutive days
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
                 <div class="progress-section">
                     <h2>Recent Sessions</h2>
                     <div class="session-log">
                         ${sessions.length === 0 ? '<p class="no-data">No sessions recorded yet. Start training to see your progress!</p>' : 
                           sessions.slice(-10).reverse().map(session => `
                             <div class="session-entry">
-                                <strong>${new Date(session.date).toLocaleDateString()}</strong> - 
+                                <strong>${new Date(session.timestamp).toLocaleDateString()}</strong> - 
                                 Level ${session.nBackLevel || 2} | 
                                 Score: ${session.totalScore || 0} | 
                                 Position: ${session.positionCorrect || 0}/${session.positionTotal || 0} | 

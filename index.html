@@ -274,12 +274,17 @@
             lastScrollTop = scrollTop;
         });
         
-        // Check if enrolled and show dashboard link
-        const enrolled = localStorage.getItem('studyEnrolled');
-        if (enrolled) {
-            const studyLink = document.querySelector('.study-link');
+        // Check if logged in and show appropriate link
+        const sessionToken = localStorage.getItem('sessionToken');
+        const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+        
+        const studyLink = document.querySelector('.study-link');
+        if (sessionToken && userData.participantId) {
             studyLink.textContent = 'Dashboard';
             studyLink.href = 'study-dashboard.html';
+        } else {
+            studyLink.textContent = 'Login';
+            studyLink.href = 'login.html';
         }
     </script>
 </body>
