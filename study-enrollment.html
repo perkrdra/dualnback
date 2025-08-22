@@ -109,8 +109,11 @@
         <div class="enrollment-form">
             <div class="success-message" id="success-message">
                 <h2>Thank you for enrolling!</h2>
-                <p>You're now part of our study. Start your training to begin tracking your progress.</p>
-                <a href="/" class="submit-btn" style="display: inline-block; width: auto; padding: 10px 30px; margin-top: 10px;">Start Training</a>
+                <p>You're now part of our study and automatically logged in. You can now access your dashboard to track your progress.</p>
+                <div style="margin-top: 20px;">
+                    <a href="study-dashboard.html" class="submit-btn" style="display: inline-block; width: auto; padding: 10px 30px; margin: 5px; background-color: #2552a3;">View Dashboard</a>
+                    <a href="/" class="submit-btn" style="display: inline-block; width: auto; padding: 10px 30px; margin: 5px; background-color: #28a745;">Start Training</a>
+                </div>
             </div>
             
             <form id="enrollment-form">
@@ -311,6 +314,9 @@
             
             // Scroll to top
             window.scrollTo(0, 0);
+            
+            // Trigger a storage event to notify other tabs/windows that login status has changed
+            window.dispatchEvent(new Event('storage'));
         });
     </script>
 </body>

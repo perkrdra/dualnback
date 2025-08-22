@@ -274,18 +274,36 @@
             lastScrollTop = scrollTop;
         });
         
-        // Check if logged in and show appropriate link
-        const sessionToken = localStorage.getItem('sessionToken');
-        const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
-        
-        const studyLink = document.querySelector('.study-link');
-        if (sessionToken && userData.participantId) {
-            studyLink.textContent = 'Dashboard';
-            studyLink.href = 'study-dashboard.html';
-        } else {
-            studyLink.textContent = 'Login';
-            studyLink.href = 'login.html';
+        // Function to update navigation based on login status
+        function updateNavigation() {
+            const sessionToken = localStorage.getItem('sessionToken');
+            const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+            const enrolled = localStorage.getItem('studyEnrolled');
+            
+            console.log('Navigation check:', { sessionToken: !!sessionToken, participantId: userData.participantId, enrolled });
+            
+            const studyLink = document.querySelector('.study-link');
+            if (sessionToken && userData.participantId) {
+                studyLink.textContent = 'Dashboard';
+                studyLink.href = 'study-dashboard.html';
+            } else if (enrolled && userData.participantId) {
+                // Legacy users who enrolled before login system
+                studyLink.textContent = 'Dashboard';
+                studyLink.href = 'study-dashboard.html';
+            } else {
+                studyLink.textContent = 'Login';
+                studyLink.href = 'login.html';
+            }
         }
+        
+        // Initial navigation update
+        updateNavigation();
+        
+        // Listen for storage changes (when user logs in/out in other tabs)
+        window.addEventListener('storage', updateNavigation);
+        
+        // Also listen for custom storage events (for same-tab changes)
+        window.addEventListener('storage', updateNavigation);
     </script>
 </body>
 </html>

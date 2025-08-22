@@ -173,9 +173,13 @@
         // Check authentication
         const sessionToken = localStorage.getItem('sessionToken');
         const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+        const enrolled = localStorage.getItem('studyEnrolled');
         
-        if (!sessionToken || !userData.participantId) {
-            // Not logged in - redirect to login page
+        console.log('Dashboard access check:', { sessionToken: !!sessionToken, participantId: userData.participantId, enrolled });
+        
+        // Allow access if user has either a session token OR is enrolled (for backward compatibility)
+        if ((!sessionToken && !enrolled) || !userData.participantId) {
+            // Not logged in and not enrolled - redirect to login page
             document.getElementById('dashboard-content').innerHTML = `
                 <div class="no-data">
                     <h2>Login Required</h2>
@@ -184,8 +188,8 @@
                     <a href="study-enrollment.html" class="save-btn" style="display: inline-block; text-decoration: none; background-color: #28a745;">New User? Enroll</a>
                 </div>
             `;
-        } else {
-            // Verify session is still valid
+        } else if (sessionToken) {
+            // Has session token - verify it's still valid
             verifySession().then(isValid => {
                 if (isValid) {
                     displayDashboard();
@@ -197,6 +201,10 @@
                     window.location.href = 'login.html';
                 }
             });
+        } else {
+            // Just enrolled (has enrolled flag and userData but no session token yet)
+            // This is the case right after enrollment
+            displayDashboard();
         }
         
         // Logout functionality
