@@ -189,11 +189,6 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.response-btn:hover:not(:disabled) {
-    background-color: #ea6b4bcc;
-    transform: scale(1.02);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
 
 .response-btn:active:not(:disabled) {
     transform: scale(0.98);
