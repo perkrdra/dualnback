@@ -882,6 +882,7 @@ class DualNBackGame {
     }
 
     resetSession() {
+        this.score = 0;  // Reset score for each new session/trial
         this.currentTrial = 0;
         this.positionCorrect = 0;
         this.letterCorrect = 0;
