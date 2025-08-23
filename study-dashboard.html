@@ -250,6 +250,10 @@
                 return { studyScores: [], examScore: null, currentStreak: 0 };
             }
             
+            // Get current user data to access supplements
+            const currentUserData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+            const currentSupplements = currentUserData.studyData?.supplements || [];
+            
             // Group sessions by date
             const sessionsByDate = {};
             sessions.forEach(session => {
@@ -307,6 +311,9 @@
                 // Calculate group average score
                 groupAverageScore = Math.round(totalScore / consecutiveCount);
                 
+                // Get supplements that were active during this period
+                const activeSuuplements = getActiveSupplements(currentSupplements, qualifyingDays[i].date, sessions);
+                
                 // Award study scores for every 5 consecutive days
                 const studyPeriodsCompleted = Math.floor(consecutiveCount / 5);
                 for (let period = 0; period < studyPeriodsCompleted; period++) {
@@ -316,13 +323,18 @@
                     studyScores.push({
                         completedDate: periodEndDate,
                         score: groupAverageScore,
-                        daysInStreak: (period + 1) * 5
+                        daysInStreak: (period + 1) * 5,
+                        supplements: activeSuuplements
                     });
                 }
                 
                 // Check for exam score (25 consecutive days)
                 if (consecutiveCount >= 25 && !examScore) {
-                    examScore = groupAverageScore;
+                    examScore = {
+                        score: groupAverageScore,
+                        supplements: activeSuuplements,
+                        completedDate: new Date(qualifyingDays[i].date)
+                    };
                 }
                 
                 // Update current streak if this is the most recent group and includes today or recent days
@@ -341,15 +353,70 @@
             return { studyScores, examScore, currentStreak };
         }
         
+        // Helper function to get supplements that were active during a specific period
+        function getActiveSupplements(currentSupplements, achievementDate, sessions) {
+            // First try to get supplements from session data during that period
+            const sessionSupplements = new Set();
+            
+            // Look at sessions around the achievement date to find which supplements were used
+            const achievementTime = achievementDate.getTime();
+            const oneDayMs = 24 * 60 * 60 * 1000;
+            
+            sessions.forEach(session => {
+                const sessionTime = new Date(session.timestamp).getTime();
+                // Include sessions from 5 days before to 5 days after achievement
+                if (Math.abs(sessionTime - achievementTime) <= 5 * oneDayMs) {
+                    // Handle both new array format and legacy single supplement format
+                    if (session.currentSupplements && Array.isArray(session.currentSupplements)) {
+                        session.currentSupplements.forEach(supplement => {
+                            if (supplement && supplement.trim()) {
+                                sessionSupplements.add(supplement);
+                            }
+                        });
+                    } else if (session.currentSupplement && session.currentSupplement.trim()) {
+                        sessionSupplements.add(session.currentSupplement);
+                    }
+                }
+            });
+            
+            // If we found supplements from sessions, use those
+            if (sessionSupplements.size > 0) {
+                return Array.from(sessionSupplements).map(supplement => ({ name: supplement }));
+            }
+            
+            // Fallback to current supplement profile (legacy behavior)
+            if (!currentSupplements || currentSupplements.length === 0) {
+                return [];
+            }
+            
+            return currentSupplements.map(supplement => {
+                if (typeof supplement === 'string') {
+                    // Handle simple string format (legacy)
+                    return { name: supplement };
+                } else if (supplement.name) {
+                    // Handle object format with name
+                    return { name: supplement.name, dosage: supplement.dosage };
+                }
+                return { name: supplement };
+            });
+        }
+        
         function displayDashboard() {
             const sessions = userData.studyData.sessions || [];
             const supplements = userData.studyData.supplements || [];
             
             // Calculate statistics
             const totalSessions = sessions.length;
-            const highestScore = Math.max(...sessions.map(s => s.totalScore || 0), 0);
+            
+            // Find session with highest score (only count sessions with 30 trials)
+            const completedSessions = sessions.filter(s => (s.trialsCompleted || s.totalTrials) >= 30);
+            const highestScoringSession = completedSessions.reduce((highest, current) => {
+                const currentScore = current.totalScore || 0;
+                const highestScore = highest.totalScore || 0;
+                return currentScore > highestScore ? current : highest;
+            }, { totalScore: 0 });
+            
             const highestLevel = Math.max(...sessions.map(s => s.nBackLevel || 2), 2);
-            const totalTime = sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 60000; // Convert to minutes
             
             // Calculate study scores and exam score
             const { studyScores, examScore, currentStreak } = calculateStudyScores(sessions);
@@ -361,16 +428,13 @@
                         <div class="stat-value">${totalSessions}</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Highest Score</div>
-                        <div class="stat-value">${highestScore}</div>
+                        <div class="stat-label">Session with Highest Score</div>
+                        <div class="stat-value">${highestScoringSession.totalScore || 0}</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${highestScoringSession.totalScore > 0 ? 'Level ' + (highestScoringSession.nBackLevel || 2) + ' | ' + (highestScoringSession.trialsCompleted || 30) + ' trials' : 'Complete a 30-trial session'}</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Highest N-Back</div>
                         <div class="stat-value">${highestLevel}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Total Time</div>
-                        <div class="stat-value">${Math.round(totalTime)}m</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Study Scores</div>
@@ -379,7 +443,7 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Exam Score</div>
-                        <div class="stat-value">${examScore || 'Not achieved'}</div>
+                        <div class="stat-value">${examScore ? examScore.score : 'Not achieved'}</div>
                         <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${examScore ? 'Completed 25 days!' : 'Current streak: ' + currentStreak + '/25'}</div>
                     </div>
                 </div>
@@ -427,8 +491,33 @@
                                 Score: ${score.score} | 
                                 Completed: ${score.completedDate.toLocaleDateString()} | 
                                 ${score.daysInStreak} consecutive days
+                                ${score.supplements && score.supplements.length > 0 ? `
+                                    <br><span style="font-size: 0.9em; color: #2552a3; font-weight: normal;">
+                                        Supplements: ${score.supplements.map(s => s.name).join(', ')}
+                                    </span>
+                                ` : '<br><span style="font-size: 0.9em; color: #666; font-weight: normal;">No supplements recorded</span>'}
                             </div>
                         `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${examScore ? `
+                <div class="progress-section">
+                    <h2>Exam Score Achieved</h2>
+                    <p>Congratulations! You completed 25 consecutive days of 10+ training sessions daily.</p>
+                    <div class="study-scores-list">
+                        <div class="study-score-entry" style="background-color: #f0f8ff; border-left: 4px solid #2552a3;">
+                            <strong>🎓 Exam Score</strong> - 
+                            Score: ${examScore.score} | 
+                            Completed: ${examScore.completedDate.toLocaleDateString()} | 
+                            25 consecutive days
+                            ${examScore.supplements && examScore.supplements.length > 0 ? `
+                                <br><span style="font-size: 0.9em; color: #2552a3; font-weight: normal;">
+                                    Supplements: ${examScore.supplements.map(s => s.name).join(', ')}
+                                </span>
+                            ` : '<br><span style="font-size: 0.9em; color: #666; font-weight: normal;">No supplements recorded</span>'}
+                        </div>
                     </div>
                 </div>
                 ` : ''}

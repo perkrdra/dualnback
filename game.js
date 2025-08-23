@@ -47,8 +47,11 @@ class DualNBackGame {
         this.positionBtn = document.getElementById('position-btn');
         this.letterBtn = document.getElementById('letter-btn');
         this.gameModeSelect = document.getElementById('game-mode');
+        this.supplementSelect1 = document.getElementById('current-supplement-1');
+        this.supplementSelect2 = document.getElementById('current-supplement-2');
         
         this.gameMode = 'dual'; // 'dual', 'position', or 'letter'
+        this.currentSupplements = []; // Array of current selected supplements
 
         this.initGrid();
         this.addEventListeners();
@@ -83,6 +86,8 @@ class DualNBackGame {
         this.positionBtn.addEventListener('click', () => this.handlePositionClick());
         this.letterBtn.addEventListener('click', () => this.handleLetterClick());
         this.gameModeSelect.addEventListener('change', () => this.handleModeChange());
+        this.supplementSelect1.addEventListener('change', () => this.handleSupplementChange());
+        this.supplementSelect2.addEventListener('change', () => this.handleSupplementChange());
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
     }
 
@@ -101,6 +106,8 @@ class DualNBackGame {
         this.pauseBtn.disabled = false;
         this.updateButtonsForMode();
         this.gameModeSelect.disabled = true;
+        this.supplementSelect1.disabled = true;
+        this.supplementSelect2.disabled = true;
     }
 
     pauseGame() {
@@ -111,6 +118,8 @@ class DualNBackGame {
         this.positionBtn.disabled = true;
         this.letterBtn.disabled = true;
         this.gameModeSelect.disabled = false;
+        this.supplementSelect1.disabled = false;
+        this.supplementSelect2.disabled = false;
     }
 
     resetGame() {
@@ -574,6 +583,22 @@ class DualNBackGame {
         console.log(`Game mode changed to: ${this.gameMode}`);
     }
 
+    handleSupplementChange() {
+        if (this.isPlaying) return;
+        
+        // Get values from both selectors
+        const supplement1 = this.supplementSelect1.value;
+        const supplement2 = this.supplementSelect2.value;
+        
+        // Create array of selected supplements (excluding empty values)
+        this.currentSupplements = [supplement1, supplement2].filter(s => s && s.trim());
+        
+        // Remove duplicates if user selected the same supplement twice
+        this.currentSupplements = [...new Set(this.currentSupplements)];
+        
+        console.log(`Current supplements changed to: ${this.currentSupplements.length > 0 ? this.currentSupplements.join(', ') : 'None'}`);
+    }
+
     updateButtonsForMode() {
         if (!this.isPlaying) {
             this.positionBtn.disabled = true;
@@ -889,6 +914,7 @@ class DualNBackGame {
             sessionDuration: sessionDuration,
             nBackLevel: this.nBack,
             gameMode: this.gameMode,
+            currentSupplements: this.currentSupplements.length > 0 ? this.currentSupplements : null,
             trialsCompleted: this.currentTrial,
             totalTrials: this.trialsPerSession,
             positionCorrect: this.positionCorrect,
