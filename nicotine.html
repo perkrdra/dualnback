@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nicotine for Cognitive Enhancement - Brain Training Supplements</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .product-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #2552a3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .product-hero {
+            background-color: #f8f9fa;
+            padding: 40px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .product-hero h1 {
+            color: #1e4285;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        .product-hero .subtitle {
+            color: #ea6a4b;
+            font-size: 1.3em;
+            margin-bottom: 30px;
+        }
+        
+        .benefits-section {
+            margin-bottom: 40px;
+        }
+        
+        .benefits-section h2 {
+            color: #1e4285;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        
+        .benefit-item {
+            display: flex;
+            align-items: start;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .benefit-icon {
+            font-size: 2em;
+            margin-right: 20px;
+            color: #f2c20a;
+        }
+        
+        .benefit-content h3 {
+            color: #2552a3;
+            margin-bottom: 10px;
+        }
+        
+        .benefit-content p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .research-section {
+            background-color: #e8f2ff;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .research-section h2 {
+            color: #1e4285;
+            margin-bottom: 20px;
+        }
+        
+        .research-item {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            border-left: 3px solid #2552a3;
+        }
+        
+        .dosage-section {
+            background-color: #fff4e6;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .dosage-section h2 {
+            color: #1e4285;
+            margin-bottom: 20px;
+        }
+        
+        .cta-box {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .cta-box h2 {
+            color: #1e4285;
+            margin-bottom: 20px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background-color: #ea6a4b;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .warning-box {
+            background-color: #ffeeee;
+            border: 2px solid #ff6b6b;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        
+        .warning-box h3 {
+            color: #d32f2f;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .warning-box ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        
+        .warning-box li {
+            margin-bottom: 8px;
+            color: #d32f2f;
+            font-weight: 500;
+        }
+        
+        .products-section {
+            background-color: #f0f8ff;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .products-section h2 {
+            color: #1e4285;
+            margin-bottom: 20px;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .product-card h4 {
+            color: #2552a3;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .product-card p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .product-link {
+            display: inline-block;
+            color: #ea6a4b;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        
+        .product-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .product-hero h1 {
+                font-size: 2em;
+            }
+            
+            .benefit-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .benefit-icon {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="product-page">
+        <a href="/" class="back-link">← Back to Brain Training</a>
+        
+        <div class="product-hero">
+            <h1>Nicotine for Cognitive Enhancement</h1>
+            <p class="subtitle">Enhanced Working Memory and Focus</p>
+        </div>
+        
+        <div class="warning-box">
+            <h3>⚠️ CRITICAL SAFETY WARNING</h3>
+            <p><strong>Nicotine is highly addictive and should only be used occasionally for cognitive enhancement.</strong></p>
+            <ul>
+                <li>Use sparingly - maximum 1-2 times per week</li>
+                <li>Never use daily or regularly</li>
+                <li>Highly addictive substance - addiction risk is real</li>
+                <li>Not recommended for anyone under 21</li>
+                <li>Avoid if pregnant, nursing, or have cardiovascular conditions</li>
+                <li>Consult healthcare provider before any use</li>
+            </ul>
+        </div>
+        
+        <div class="benefits-section">
+            <h2>How Nicotine Enhances Cognitive Function</h2>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">🧠</div>
+                <div class="benefit-content">
+                    <h3>Enhanced Working Memory</h3>
+                    <p>Research shows nicotine activates α4, β2, and α7 nicotinic acetylcholine receptors, improving working memory performance and information processing speed during cognitively demanding tasks.</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">🎯</div>
+                <div class="benefit-content">
+                    <h3>Improved Attention & Focus</h3>
+                    <p>Nicotine enhances activity in executive control regions including anterior cingulate cortex and frontoparietal cortices while reducing default-mode network activity, resulting in sharper focus.</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">⚡</div>
+                <div class="benefit-content">
+                    <h3>Enhanced Information Processing</h3>
+                    <p>Studies demonstrate nicotine improves encoding processes and can enhance memory formation, particularly beneficial for complex cognitive training like dual n-back exercises.</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">🌙</div>
+                <div class="benefit-content">
+                    <h3>Sleep Deprivation Recovery</h3>
+                    <p>Research shows acute nicotine can improve memory impairments caused by sleep deprivation by enhancing CaMKII phosphorylation in brain regions critical for memory.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="research-section">
+            <h2>Scientific Research</h2>
+            <div class="research-item">
+                <strong>Working Memory Enhancement:</strong> 2024 studies confirm nicotine enhances working memory, attention, and executive function through nicotinic acetylcholine receptor activation in key brain regions.
+            </div>
+            <div class="research-item">
+                <strong>Brain Network Effects:</strong> Neuroimaging shows nicotine increases activity in executive control regions while reducing default-mode network activity, optimizing cognitive performance.
+            </div>
+            <div class="research-item">
+                <strong>Memory Consolidation:</strong> Research indicates low doses of nicotine promote memory consolidation while high doses can inhibit it - emphasizing the importance of occasional, low-dose use.
+            </div>
+            <div class="research-item">
+                <strong>Cognitive Domains:</strong> Meta-analyses show nicotine particularly enhances attention, working memory, fine motor skills, and episodic memory functions.
+            </div>
+        </div>
+        
+        <div class="dosage-section">
+            <h2>Occasional Use Guidelines</h2>
+            <p><strong>Frequency:</strong> Maximum 1-2 times per week only</p>
+            <p><strong>Timing:</strong> Use 15-30 minutes before cognitive training sessions</p>
+            <p><strong>Forms:</strong> Nicotine gum (2-4mg) or lozenges preferred over smoking/vaping</p>
+            <p><strong>Duration:</strong> Effects last 1-2 hours</p>
+            <p><strong>Important:</strong> Never establish a regular pattern of use to avoid addiction</p>
+        </div>
+        
+        <div class="products-section">
+            <h2>Safer Nicotine Products (Occasional Use Only)</h2>
+            <p>If using nicotine for cognitive enhancement, these are the safest delivery methods:</p>
+            
+            <div class="product-grid">
+                <div class="product-card">
+                    <h4>Nicorette Nicotine Gum</h4>
+                    <p>2mg or 4mg options. Controlled release, easy to dose. Stop chewing when you feel the cognitive benefits. Avoid regular use.</p>
+                    <a href="https://www.amazon.com/s?k=nicorette+nicotine+gum" class="product-link" target="_blank" rel="noopener noreferrer">View on Amazon →</a>
+                </div>
+                
+                <div class="product-card">
+                    <h4>Nicotine Lozenges</h4>
+                    <p>2mg or 4mg lozenges provide steady absorption. Dissolve slowly in mouth. Precise dosing for occasional cognitive enhancement.</p>
+                    <a href="https://www.amazon.com/s?k=nicotine+lozenges" class="product-link" target="_blank" rel="noopener noreferrer">View on Amazon →</a>
+                </div>
+                
+                <div class="product-card">
+                    <h4>Lucy Nicotine Gum</h4>
+                    <p>Premium nicotine gum with natural flavors. 4mg strength. Designed for occasional use with better taste than traditional options.</p>
+                    <a href="https://www.amazon.com/s?k=lucy+nicotine+gum" class="product-link" target="_blank" rel="noopener noreferrer">View on Amazon →</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta-box">
+            <h2>Ready to Enhance Your Training?</h2>
+            <p>Use nicotine sparingly and responsibly as an occasional cognitive enhancer during your most important training sessions.</p>
+            <a href="/" class="cta-button">Start Training Now</a>
+        </div>
+        
+        <p style="text-align: center; color: #d32f2f; font-weight: bold; margin-top: 40px;">
+            * Nicotine is highly addictive. This information is for educational purposes only. Always consult a healthcare provider and use extreme caution.
+        </p>
+    </div>
+</body>
+</html>

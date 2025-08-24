@@ -428,7 +428,7 @@
                         <div class="stat-value">${totalSessions}</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Session with Highest Score</div>
+                        <div class="stat-label">Highest Total Score</div>
                         <div class="stat-value">${highestScoringSession.totalScore || 0}</div>
                         <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${highestScoringSession.totalScore > 0 ? 'Level ' + (highestScoringSession.nBackLevel || 2) + ' | ' + (highestScoringSession.trialsCompleted || 30) + ' trials' : 'Complete a 30-trial session'}</div>
                     </div>
@@ -557,6 +557,32 @@
             
             alert('Supplements saved successfully!');
         }
+        
+        // Top bar scroll hide functionality
+        let lastScrollY = window.scrollY;
+        const navigationBar = document.querySelector('.top-bar');
+        
+        function handleScroll() {
+            const currentScrollY = window.scrollY;
+            
+            // Hide top bar when scrolling down past 100px
+            if (currentScrollY > 100) {
+                navigationBar.classList.add('hidden');
+            } else {
+                navigationBar.classList.remove('hidden');
+            }
+            
+            lastScrollY = currentScrollY;
+        }
+        
+        // Add scroll event listener with throttling for better performance
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            scrollTimeout = setTimeout(handleScroll, 10);
+        });
     </script>
 </body>
 </html>

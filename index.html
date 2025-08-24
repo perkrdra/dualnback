@@ -17,7 +17,17 @@
             <img src="favicon.svg" alt="UltimateBrain.io Logo" class="logo-icon">
             UltimateBrain.io
         </a>
-        <a href="study-enrollment.html" class="study-link">Join Study</a>
+        <div class="nav-container">
+            <a href="study-enrollment.html" class="study-link desktop-nav">Join Study</a>
+            <button class="hamburger-menu" id="hamburger-menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+        <div class="mobile-menu" id="mobile-menu">
+            <a href="study-enrollment.html" class="mobile-study-link">Join Study</a>
+        </div>
     </div>
     <div id="game-container">
         <h1>Welcome to the ultimate brain training experience</h1>
@@ -40,6 +50,14 @@
                     <button id="pause-btn" disabled>Pause</button>
                     <button id="reset-btn">Reset</button>
                 </div>
+                <div id="mode-selector">
+                    <label>Mode:</label>
+                    <select id="game-mode">
+                        <option value="dual">Dual (Position + Letter)</option>
+                        <option value="position">Position Only</option>
+                        <option value="letter">Letter Only</option>
+                    </select>
+                </div>
             </div>
         </div>
         <div id="scores-container">
@@ -51,14 +69,6 @@
             <button id="trial-down" class="level-btn">-</button>
             <span>Trials: <span id="trial-value">0/30</span></span>
             <button id="trial-up" class="level-btn">+</button>
-        </div>
-        <div id="mode-selector">
-            <label>Mode:</label>
-            <select id="game-mode">
-                <option value="dual">Dual (Position + Letter)</option>
-                <option value="position">Position Only</option>
-                <option value="letter">Letter Only</option>
-            </select>
         </div>
         
         <div id="supplement-selector">
@@ -81,6 +91,7 @@
                     <option value="sleep-pineal-peptides">Sleep & Pineal Peptides</option>
                     <option value="breathing-exercises">Breathing Exercises</option>
                     <option value="meditation">Meditation</option>
+                    <option value="nicotine">Nicotine (Occasional)</option>
                     <option value="other">Other</option>
                 </select>
                 <select id="current-supplement-2" class="supplement-select">
@@ -100,6 +111,7 @@
                     <option value="sleep-pineal-peptides">Sleep & Pineal Peptides</option>
                     <option value="breathing-exercises">Breathing Exercises</option>
                     <option value="meditation">Meditation</option>
+                    <option value="nicotine">Nicotine (Occasional)</option>
                     <option value="other">Other</option>
                 </select>
             </div>
@@ -240,6 +252,12 @@
                 <p>Mitochondrial biogenesis enhancer that dramatically increases brain energy production, improves cognitive processing, and supports neuroplasticity.</p>
                 <a href="pqq.html" class="supplement-link">Learn More →</a>
             </div>
+            
+            <div class="supplement-card">
+                <h3>Nicotine</h3>
+                <p><strong>Use Sparingly:</strong> Research shows nicotine enhances working memory, attention, and focus through nicotinic acetylcholine receptors. Occasional use only - highly addictive.</p>
+                <a href="nicotine.html" class="supplement-link">Learn More →</a>
+            </div>
         </div>
         
         <p class="supplements-disclaimer">* These statements have not been evaluated by the FDA. Always consult with a healthcare professional before starting any supplement regimen.</p>
@@ -302,21 +320,6 @@
     <script src="data-manager.js"></script>
     <script src="game.js"></script>
     <script>
-        // Top bar scroll collapse functionality
-        let lastScrollTop = 0;
-        const topBar = document.querySelector('.top-bar');
-        
-        window.addEventListener('scroll', function() {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            
-            if (scrollTop > 100) {
-                topBar.classList.add('collapsed');
-            } else {
-                topBar.classList.remove('collapsed');
-            }
-            
-            lastScrollTop = scrollTop;
-        });
         
         // Function to update navigation based on login status
         function updateNavigation() {
@@ -348,6 +351,70 @@
         
         // Also listen for custom storage events (for same-tab changes)
         window.addEventListener('storage', updateNavigation);
+        
+        // Hamburger menu functionality
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileStudyLink = document.querySelector('.mobile-study-link');
+        
+        hamburgerMenu.addEventListener('click', function() {
+            hamburgerMenu.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+        
+        // Update mobile menu link to match desktop navigation
+        function updateMobileNavigation() {
+            const sessionToken = localStorage.getItem('sessionToken');
+            const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+            const enrolled = localStorage.getItem('studyEnrolled');
+            
+            if (sessionToken && userData.participantId) {
+                mobileStudyLink.textContent = 'Dashboard';
+                mobileStudyLink.href = 'study-dashboard.html';
+            } else if (enrolled && userData.participantId) {
+                mobileStudyLink.textContent = 'Dashboard';
+                mobileStudyLink.href = 'study-dashboard.html';
+            } else {
+                mobileStudyLink.textContent = 'Login';
+                mobileStudyLink.href = 'login.html';
+            }
+        }
+        
+        // Update mobile navigation on page load and storage changes
+        updateMobileNavigation();
+        window.addEventListener('storage', updateMobileNavigation);
+        
+        // Close mobile menu when clicking a link
+        mobileStudyLink.addEventListener('click', function() {
+            hamburgerMenu.classList.remove('active');
+            mobileMenu.classList.remove('active');
+        });
+        
+        // Top bar scroll collapse functionality
+        let lastScrollY = window.scrollY;
+        const navigationBar = document.querySelector('.top-bar');
+        
+        function handleScroll() {
+            const currentScrollY = window.scrollY;
+            
+            // Hide top bar when scrolling down past 100px
+            if (currentScrollY > 100) {
+                navigationBar.classList.add('hidden');
+            } else {
+                navigationBar.classList.remove('hidden');
+            }
+            
+            lastScrollY = currentScrollY;
+        }
+        
+        // Add scroll event listener with throttling for better performance
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            scrollTimeout = setTimeout(handleScroll, 10);
+        });
     </script>
 </body>
 </html>

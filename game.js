@@ -99,6 +99,7 @@ class DualNBackGame {
         this.sessionStartTime = Date.now();
         this.currentRound = 0;
         this.currentTrial = 0;
+        this.score = 0;  // Reset score when starting a new game session
         
         this.generateSequenceWithMatches();
         this.interval = setInterval(() => this.nextRound(), 3000);

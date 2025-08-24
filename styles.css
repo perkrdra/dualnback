@@ -3,6 +3,7 @@ body {
     background-color: white;
     margin: 0;
     padding: 0;
+    padding-top: 70px; /* Add padding for fixed header */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -15,18 +16,25 @@ body {
     border-bottom: 2px solid #e9ecef;
     padding: 8px 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 100;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease;
 }
 
-.study-link {
-    position: absolute;
-    right: 30px;
+.nav-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+}
+
+.study-link, .mobile-study-link {
     background-color: #ea6a4b;
     color: white;
     padding: 6px 20px;
@@ -37,25 +45,60 @@ body {
     transition: all 0.3s ease;
 }
 
-.study-link:hover {
+.study-link:hover, .mobile-study-link:hover {
     background-color: #d4553c;
     transform: translateY(-1px);
 }
 
-.top-bar.collapsed {
-    padding: 4px 0;
-    background-color: rgba(248, 249, 250, 0.95);
-    backdrop-filter: blur(10px);
+.hamburger-menu {
+    display: none;
+    flex-direction: column;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    gap: 4px;
 }
 
-.top-bar.collapsed .domain-name {
-    font-size: 1em;
-    padding: 3px 15px;
+.hamburger-line {
+    width: 25px;
+    height: 3px;
+    background-color: #ea6a4b;
+    transition: all 0.3s ease;
 }
 
-.top-bar.collapsed .logo-icon {
-    width: 20px;
-    height: 20px;
+.hamburger-menu.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+}
+
+.mobile-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    min-width: 120px;
+}
+
+.mobile-menu.active {
+    display: block;
+}
+
+.top-bar.hidden {
+    transform: translateY(-100%);
 }
 
 .domain-name {
@@ -168,7 +211,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 40px;
     margin-bottom: 30px;
 }
 
@@ -300,8 +343,11 @@ button:disabled {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin: 10px 0 15px;
+    margin: 25px 0 15px;
     font-size: 18px;
+    width: 330px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #mode-selector label {
@@ -315,7 +361,7 @@ button:disabled {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin: 10px 0 30px;
+    margin: 30px 0 50px;
     font-size: 18px;
 }
 
@@ -341,7 +387,7 @@ button:disabled {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    min-width: 180px;
+    width: 330px;
 }
 
 #game-mode:hover, .supplement-select:hover {
@@ -916,6 +962,7 @@ button:disabled {
     
     #mode-selector, #supplement-selector {
         font-size: 16px;
+        width: 270px;
     }
     
     #supplement-dropdowns {
@@ -926,7 +973,7 @@ button:disabled {
     #game-mode, .supplement-select {
         font-size: 14px;
         padding: 6px 10px;
-        min-width: 200px;
+        width: 270px;
     }
     
     .level-btn {
@@ -1022,5 +1069,14 @@ button:disabled {
     
     .supplements-disclaimer {
         font-size: 0.85em;
+    }
+    
+    /* Mobile Navigation */
+    .desktop-nav {
+        display: none;
+    }
+    
+    .hamburger-menu {
+        display: flex;
     }
 }
