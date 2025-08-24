@@ -49,6 +49,8 @@ class DualNBackGame {
         this.gameModeSelect = document.getElementById('game-mode');
         this.supplementSelect1 = document.getElementById('current-supplement-1');
         this.supplementSelect2 = document.getElementById('current-supplement-2');
+        this.supplementSelect3 = document.getElementById('current-supplement-3');
+        this.supplementSelect4 = document.getElementById('current-supplement-4');
         
         this.gameMode = 'dual'; // 'dual', 'position', or 'letter'
         this.currentSupplements = []; // Array of current selected supplements
@@ -88,6 +90,8 @@ class DualNBackGame {
         this.gameModeSelect.addEventListener('change', () => this.handleModeChange());
         this.supplementSelect1.addEventListener('change', () => this.handleSupplementChange());
         this.supplementSelect2.addEventListener('change', () => this.handleSupplementChange());
+        this.supplementSelect3.addEventListener('change', () => this.handleSupplementChange());
+        this.supplementSelect4.addEventListener('change', () => this.handleSupplementChange());
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
     }
 
@@ -587,12 +591,14 @@ class DualNBackGame {
     handleSupplementChange() {
         if (this.isPlaying) return;
         
-        // Get values from both selectors
+        // Get values from all four selectors
         const supplement1 = this.supplementSelect1.value;
         const supplement2 = this.supplementSelect2.value;
+        const supplement3 = this.supplementSelect3.value;
+        const supplement4 = this.supplementSelect4.value;
         
         // Create array of selected supplements (excluding empty values)
-        this.currentSupplements = [supplement1, supplement2].filter(s => s && s.trim());
+        this.currentSupplements = [supplement1, supplement2, supplement3, supplement4].filter(s => s && s.trim());
         
         // Remove duplicates if user selected the same supplement twice
         this.currentSupplements = [...new Set(this.currentSupplements)];
