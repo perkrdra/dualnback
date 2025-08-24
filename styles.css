@@ -8,13 +8,14 @@ body {
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 .top-bar {
     width: 100%;
     background-color: #f8f9fa;
     border-bottom: 2px solid #e9ecef;
-    padding: 8px 20px;
+    padding: 8px 35px 8px 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     position: fixed;
     top: 0;
@@ -32,6 +33,7 @@ body {
     align-items: center;
     gap: 15px;
     position: relative;
+    margin-right: 20px;
 }
 
 .study-link, .mobile-study-link {
@@ -58,6 +60,7 @@ body {
     cursor: pointer;
     padding: 8px;
     gap: 4px;
+    margin-right: 15px;
 }
 
 .hamburger-line {
@@ -170,7 +173,7 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    width: 330px;
+    width: min(330px, 90vw);
     margin: 0 auto;
 }
 
@@ -216,7 +219,7 @@ body {
 }
 
 #response-buttons button {
-    width: 330px;
+    width: min(330px, 90vw);
 }
 
 .response-btn {
@@ -345,7 +348,7 @@ button:disabled {
     gap: 10px;
     margin: 25px 0 15px;
     font-size: 18px;
-    width: 330px;
+    width: min(330px, 90vw);
     margin-left: auto;
     margin-right: auto;
 }
@@ -387,7 +390,7 @@ button:disabled {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    width: 330px;
+    width: min(330px, 90vw);
 }
 
 #game-mode:hover, .supplement-select:hover {
@@ -1080,5 +1083,9 @@ button:disabled {
     
     .hamburger-menu {
         display: flex;
+    }
+    
+    .top-bar {
+        padding: 8px 35px 8px 20px;
     }
 }
