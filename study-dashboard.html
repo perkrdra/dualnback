@@ -154,10 +154,7 @@
             <img src="favicon.svg" alt="UltimateBrain.io Logo" class="logo-icon">
             UltimateBrain.io
         </a>
-        <div class="dashboard-nav-buttons">
-            <a href="/" class="study-link">Back to Training</a>
-            <button id="logout-btn" class="study-link" style="background-color: #dc3545; margin-left: 10px;">Logout</button>
-        </div>
+        <a href="/" class="study-link">Back to Training</a>
     </div>
 
     <div id="game-container">
@@ -207,15 +204,6 @@
             displayDashboard();
         }
         
-        // Logout functionality
-        document.getElementById('logout-btn').addEventListener('click', function() {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('sessionToken');
-                localStorage.removeItem('studyUserData');
-                localStorage.removeItem('studyEnrolled');
-                window.location.href = '/';
-            }
-        });
         
         // Verify session with server (if available)
         async function verifySession() {
@@ -411,11 +399,9 @@
             // Find session with highest score (only count sessions with 30 trials)
             const completedSessions = sessions.filter(s => (s.trialsCompleted || s.totalTrials) >= 30);
             const highestScoringSession = completedSessions.reduce((highest, current) => {
-                // Use totalScore if available, otherwise calculate from correct answers (total matches)
-                const currentScore = current.totalScore !== undefined ? current.totalScore : 
-                    (current.positionCorrect || 0) + (current.letterCorrect || 0);
-                const highestScore = highest.totalScore !== undefined ? highest.totalScore :
-                    (highest.positionCorrect || 0) + (highest.letterCorrect || 0);
+                // Use totalScore directly - it now represents correct trials, not matches
+                const currentScore = current.totalScore || 0;
+                const highestScore = highest.totalScore || 0;
                 return currentScore > highestScore ? current : highest;
             }, { totalScore: 0 });
             
@@ -432,10 +418,8 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Highest Total Score</div>
-                        <div class="stat-value">${highestScoringSession.totalScore !== undefined ? highestScoringSession.totalScore : 
-                            (highestScoringSession.positionCorrect || 0) + (highestScoringSession.letterCorrect || 0)}</div>
-                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${(highestScoringSession.totalScore !== undefined ? highestScoringSession.totalScore : 
-                            (highestScoringSession.positionCorrect || 0) + (highestScoringSession.letterCorrect || 0)) > 0 ? 'Level ' + (highestScoringSession.nBackLevel || 2) + ' | ' + (highestScoringSession.trialsCompleted || 30) + ' trials' : 'Complete a 30-trial session'}</div>
+                        <div class="stat-value">${highestScoringSession.totalScore || 0}</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${(highestScoringSession.totalScore || 0) > 0 ? 'Level ' + (highestScoringSession.nBackLevel || 2) + ' | ' + (highestScoringSession.trialsCompleted || 30) + ' trials' : 'Complete a 30-trial session'}</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Highest N-Back</div>
@@ -535,8 +519,7 @@
                             <div class="session-entry">
                                 <strong>${new Date(session.timestamp).toLocaleDateString()}</strong> - 
                                 Level ${session.nBackLevel || 2} | 
-                                Score: ${session.totalScore !== undefined ? session.totalScore : 
-                                    (session.positionCorrect || 0) + (session.letterCorrect || 0)} | 
+                                Score: ${session.totalScore || 0} | 
                                 Position: ${session.positionCorrect || 0}/${session.positionTotal || 0} | 
                                 Letter: ${session.letterCorrect || 0}/${session.letterTotal || 0}
                             </div>

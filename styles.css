@@ -355,6 +355,7 @@ button:disabled {
 
 #mode-selector {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 10px;
@@ -1176,22 +1177,6 @@ button:disabled {
         padding: 8px 35px 8px 20px;
     }
     
-    .dashboard-nav-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        margin-right: 15px;
-    }
-    
-    .dashboard-nav-buttons .study-link {
-        font-size: 0.9em !important;
-        padding: 12px 20px !important;
-        margin-left: 0 !important;
-        min-height: 44px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
     
     /* Extra padding for dashboard on mobile */
     body {

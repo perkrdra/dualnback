@@ -59,6 +59,7 @@ class DualNBackGame {
         this.gameSpeed = 3; // Default speed level (1=slowest, 5=fastest)
         this.roundInterval = 3000; // Default 3 seconds
         this.responseTime = 2500; // Default 2.5 seconds
+        this.correctTrials = 0; // Number of trials where user got everything right
 
         this.initGrid();
         this.addEventListeners();
@@ -641,6 +642,76 @@ class DualNBackGame {
         console.log(`Speed changed to: ${speedConfig.label}`);
     }
 
+    checkTrialCompletion() {
+        // Check if the current trial was completed successfully
+        // A trial is successful if the user correctly identified or didn't identify matches
+        
+        if (this.currentRound <= this.nBack) return; // Can't have matches in first N trials
+        
+        const currentIndex = this.currentRound - 1;
+        const nBackIndex = currentIndex - this.nBack;
+        const current = this.sequence[currentIndex];
+        const nBackAgo = this.sequence[nBackIndex];
+        
+        const hasPositionMatch = current.position === nBackAgo.position;
+        const hasLetterMatch = current.letter === nBackAgo.letter;
+        
+        let trialCorrect = true;
+        
+        // Check position accuracy based on game mode
+        if (this.gameMode === 'dual' || this.gameMode === 'position') {
+            const userClickedPosition = this.sequence[currentIndex].userClickedPosition || false;
+            if (hasPositionMatch !== userClickedPosition) {
+                trialCorrect = false;
+            }
+        }
+        
+        // Check letter accuracy based on game mode  
+        if (this.gameMode === 'dual' || this.gameMode === 'letter') {
+            const userClickedLetter = this.sequence[currentIndex].userClickedLetter || false;
+            if (hasLetterMatch !== userClickedLetter) {
+                trialCorrect = false;
+            }
+        }
+        
+        if (trialCorrect) {
+            this.correctTrials++;
+            console.log(`Trial ${this.currentRound} CORRECT! Total correct trials: ${this.correctTrials}`);
+        } else {
+            console.log(`Trial ${this.currentRound} INCORRECT! Total correct trials: ${this.correctTrials}`);
+        }
+        
+        this.updateScore();
+    }
+
+    handlePositionClick() {
+        if (!this.isPlaying || this.currentRound <= this.nBack) return;
+        
+        // Record that user clicked position for current trial
+        const currentIndex = this.currentRound - 1;
+        this.sequence[currentIndex].userClickedPosition = true;
+        
+        console.log(`User clicked Position for trial ${this.currentRound}`);
+        this.checkPositionMatch();
+    }
+
+    handleLetterClick() {
+        if (!this.isPlaying || this.currentRound <= this.nBack) return;
+        
+        // Record that user clicked letter for current trial
+        const currentIndex = this.currentRound - 1;
+        this.sequence[currentIndex].userClickedLetter = true;
+        
+        console.log(`User clicked Letter for trial ${this.currentRound}`);
+        this.checkLetterMatch();
+    }
+
+    checkMatches() {
+        // This method is called after the response time expires for each trial
+        // It evaluates the trial completion and moves to the next round
+        this.checkTrialCompletion();
+    }
+
     updateButtonsForMode() {
         if (!this.isPlaying) {
             this.positionBtn.disabled = true;
@@ -671,6 +742,8 @@ class DualNBackGame {
     }
 
     updateScore() {
+        // Score is based on correctly completed trials, not individual matches
+        this.score = this.correctTrials;
         this.scoreValue.textContent = this.score;
     }
 
@@ -693,14 +766,12 @@ class DualNBackGame {
         this.positionTotal++;
         
         if (isCorrect) {
-            this.score += 10;
             this.positionCorrect++;
             this.showFeedback(true, 'position');
-            console.log(`Position CORRECT! Score: ${this.score}`);
+            console.log(`Position CORRECT! Total matches: ${this.positionCorrect + this.letterCorrect}`);
         } else {
-            this.score -= 5;
             this.showFeedback(false, 'position');
-            console.log(`Position WRONG! Score: ${this.score}`);
+            console.log(`Position WRONG! Total matches: ${this.positionCorrect + this.letterCorrect}`);
         }
         this.updateScore();
         this.updateScoreDisplays();
@@ -718,14 +789,12 @@ class DualNBackGame {
         this.letterTotal++;
         
         if (isCorrect) {
-            this.score += 10;
             this.letterCorrect++;
             this.showFeedback(true, 'letter');
-            console.log(`Letter CORRECT! Score: ${this.score}`);
+            console.log(`Letter CORRECT! Total matches: ${this.positionCorrect + this.letterCorrect}`);
         } else {
-            this.score -= 5;
             this.showFeedback(false, 'letter');
-            console.log(`Letter WRONG! Score: ${this.score}`);
+            console.log(`Letter WRONG! Total matches: ${this.positionCorrect + this.letterCorrect}`);
         }
         this.updateScore();
         this.updateScoreDisplays();
@@ -930,6 +999,7 @@ class DualNBackGame {
         this.letterCorrect = 0;
         this.positionTotal = 0;
         this.letterTotal = 0;
+        this.correctTrials = 0;
         this.sequence = [];
         this.currentRound = 0;
         this.updateTrialDisplay();
