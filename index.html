@@ -50,6 +50,28 @@
                     <button id="pause-btn" disabled>Pause</button>
                     <button id="reset-btn">Reset</button>
                 </div>
+                <div id="speed-selector">
+                    <label>Speed:</label>
+                    <div id="speed-controls">
+                        <input type="range" id="speed-slider" min="1" max="5" value="3" step="1">
+                        <div id="speed-labels">
+                            <span>Slow</span>
+                            <span>Normal</span>
+                            <span>Fast</span>
+                        </div>
+                        <div id="speed-value">Normal (3.0s)</div>
+                    </div>
+                </div>
+                <div id="trial">
+                    <button id="trial-down" class="level-btn">-</button>
+                    <span>Trials: <span id="trial-value">0/30</span></span>
+                    <button id="trial-up" class="level-btn">+</button>
+                </div>
+                <div id="scores-container">
+                    <div id="position-score" class="score-item">Position: <span id="position-score-value">0/0</span></div>
+                    <div id="score" class="score-item">Total Score: <span id="score-value">0</span></div>
+                    <div id="letter-score" class="score-item">Letter: <span id="letter-score-value">0/0</span></div>
+                </div>
                 <div id="mode-selector">
                     <label>Mode:</label>
                     <select id="game-mode">
@@ -59,16 +81,6 @@
                     </select>
                 </div>
             </div>
-        </div>
-        <div id="scores-container">
-            <div id="position-score" class="score-item">Position: <span id="position-score-value">0/0</span></div>
-            <div id="score" class="score-item">Total Score: <span id="score-value">0</span></div>
-            <div id="letter-score" class="score-item">Letter: <span id="letter-score-value">0/0</span></div>
-        </div>
-        <div id="trial">
-            <button id="trial-down" class="level-btn">-</button>
-            <span>Trials: <span id="trial-value">0/30</span></span>
-            <button id="trial-up" class="level-btn">+</button>
         </div>
         
         <div id="supplement-selector">

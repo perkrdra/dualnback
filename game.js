@@ -51,9 +51,14 @@ class DualNBackGame {
         this.supplementSelect2 = document.getElementById('current-supplement-2');
         this.supplementSelect3 = document.getElementById('current-supplement-3');
         this.supplementSelect4 = document.getElementById('current-supplement-4');
+        this.speedSlider = document.getElementById('speed-slider');
+        this.speedValue = document.getElementById('speed-value');
         
         this.gameMode = 'dual'; // 'dual', 'position', or 'letter'
         this.currentSupplements = []; // Array of current selected supplements
+        this.gameSpeed = 3; // Default speed level (1=slowest, 5=fastest)
+        this.roundInterval = 3000; // Default 3 seconds
+        this.responseTime = 2500; // Default 2.5 seconds
 
         this.initGrid();
         this.addEventListeners();
@@ -92,6 +97,7 @@ class DualNBackGame {
         this.supplementSelect2.addEventListener('change', () => this.handleSupplementChange());
         this.supplementSelect3.addEventListener('change', () => this.handleSupplementChange());
         this.supplementSelect4.addEventListener('change', () => this.handleSupplementChange());
+        this.speedSlider.addEventListener('input', () => this.handleSpeedChange());
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
     }
 
@@ -106,13 +112,16 @@ class DualNBackGame {
         this.score = 0;  // Reset score when starting a new game session
         
         this.generateSequenceWithMatches();
-        this.interval = setInterval(() => this.nextRound(), 3000);
+        this.interval = setInterval(() => this.nextRound(), this.roundInterval);
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
         this.updateButtonsForMode();
         this.gameModeSelect.disabled = true;
+        this.speedSlider.disabled = true;
         this.supplementSelect1.disabled = true;
         this.supplementSelect2.disabled = true;
+        this.supplementSelect3.disabled = true;
+        this.supplementSelect4.disabled = true;
     }
 
     pauseGame() {
@@ -123,8 +132,11 @@ class DualNBackGame {
         this.positionBtn.disabled = true;
         this.letterBtn.disabled = true;
         this.gameModeSelect.disabled = false;
+        this.speedSlider.disabled = false;
         this.supplementSelect1.disabled = false;
         this.supplementSelect2.disabled = false;
+        this.supplementSelect3.disabled = false;
+        this.supplementSelect4.disabled = false;
     }
 
     resetGame() {
@@ -329,7 +341,7 @@ class DualNBackGame {
             console.log(`Round ${this.currentRound}: Comparing position ${currentIndex} (${current.position}) with ${nBackIndex} (${nBackAgo.position}) = ${positionMatch}`);
             console.log(`Round ${this.currentRound}: Comparing letter ${currentIndex} (${current.letter}) with ${nBackIndex} (${nBackAgo.letter}) = ${letterMatch}`);
             
-            setTimeout(() => this.checkMatches(), 2500);
+            setTimeout(() => this.checkMatches(), this.responseTime);
         }
     }
 
@@ -604,6 +616,29 @@ class DualNBackGame {
         this.currentSupplements = [...new Set(this.currentSupplements)];
         
         console.log(`Current supplements changed to: ${this.currentSupplements.length > 0 ? this.currentSupplements.join(', ') : 'None'}`);
+    }
+
+    handleSpeedChange() {
+        if (this.isPlaying) return;
+        
+        this.gameSpeed = parseInt(this.speedSlider.value);
+        
+        // Speed mapping: 1=Very Slow (5s), 2=Slow (4s), 3=Normal (3s), 4=Fast (2s), 5=Very Fast (1.5s)
+        const speedMap = {
+            1: { interval: 5000, response: 4500, label: 'Very Slow (5.0s)' },
+            2: { interval: 4000, response: 3500, label: 'Slow (4.0s)' },
+            3: { interval: 3000, response: 2500, label: 'Normal (3.0s)' },
+            4: { interval: 2000, response: 1500, label: 'Fast (2.0s)' },
+            5: { interval: 1500, response: 1000, label: 'Very Fast (1.5s)' }
+        };
+        
+        const speedConfig = speedMap[this.gameSpeed];
+        this.roundInterval = speedConfig.interval;
+        this.responseTime = speedConfig.response;
+        
+        this.speedValue.textContent = speedConfig.label;
+        
+        console.log(`Speed changed to: ${speedConfig.label}`);
     }
 
     updateButtonsForMode() {
