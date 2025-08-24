@@ -929,7 +929,7 @@ class DualNBackGame {
             positionTotal: this.positionTotal,
             letterCorrect: this.letterCorrect,
             letterTotal: this.letterTotal,
-            totalScore: this.score,
+            totalScore: this.positionCorrect + this.letterCorrect,
             positionAccuracy: this.positionTotal > 0 ? (this.positionCorrect / this.positionTotal * 100).toFixed(1) : 0,
             letterAccuracy: this.letterTotal > 0 ? (this.letterCorrect / this.letterTotal * 100).toFixed(1) : 0,
             overallAccuracy: (this.positionTotal + this.letterTotal) > 0 ? 
