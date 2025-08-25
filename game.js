@@ -56,9 +56,9 @@ class DualNBackGame {
         
         this.gameMode = 'dual'; // 'dual', 'position', or 'letter'
         this.currentSupplements = []; // Array of current selected supplements
-        this.gameSpeed = 3; // Default speed level (1=slowest, 5=fastest)
-        this.roundInterval = 3000; // Default 3 seconds
-        this.responseTime = 2500; // Default 2.5 seconds
+        this.gameSpeed = 2; // Default speed level (1=slowest, 5=fastest)
+        this.roundInterval = 4000; // Default 4 seconds  
+        this.responseTime = 3500; // Default 3.5 seconds
         this.correctTrials = 0; // Number of trials where user got everything right
 
         this.initGrid();
@@ -100,11 +100,18 @@ class DualNBackGame {
         this.supplementSelect4.addEventListener('change', () => this.handleSupplementChange());
         this.speedSlider.addEventListener('input', () => this.handleSpeedChange());
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+        
+        // Add right-click support for Letter (Z) button
+        document.addEventListener('contextmenu', (e) => this.handleRightClick(e));
+        document.addEventListener('mousedown', (e) => this.handleMouseDown(e));
     }
 
     startGame() {
         // Initialize audio context on user interaction (required for iOS)
         this.initAudioContext();
+        
+        // Reset session data when starting a new game
+        this.resetSession();
         
         this.isPlaying = true;
         this.sessionStartTime = Date.now();
@@ -578,6 +585,11 @@ class DualNBackGame {
         }
         console.log('Position button clicked - checking position match');
         this.positionMatched = true;
+        
+        // Record that user clicked position for current trial
+        const currentIndex = this.currentRound - 1;
+        this.sequence[currentIndex].userClickedPosition = true;
+        
         this.checkPositionMatch();
     }
 
@@ -588,6 +600,11 @@ class DualNBackGame {
         }
         console.log('Letter button clicked - checking letter match');
         this.soundMatched = true;
+        
+        // Record that user clicked letter for current trial
+        const currentIndex = this.currentRound - 1;
+        this.sequence[currentIndex].userClickedLetter = true;
+        
         this.checkLetterMatch();
     }
 
@@ -642,6 +659,48 @@ class DualNBackGame {
         console.log(`Speed changed to: ${speedConfig.label}`);
     }
 
+    handleRightClick(e) {
+        // Prevent context menu from appearing during gameplay
+        if (this.isPlaying && this.canRespond) {
+            e.preventDefault();
+            return false;
+        }
+    }
+
+    handleMouseDown(e) {
+        // Handle right mouse button (button 2) as Letter (Z) input
+        if (e.button === 2 && this.isPlaying && this.canRespond && !this.soundMatched && this.gameMode !== 'position') {
+            e.preventDefault();
+            console.log('Right mouse button clicked - checking letter match');
+            
+            // Visually activate the Letter (Z) button
+            this.triggerButtonVisualFeedback(this.letterBtn);
+            
+            this.soundMatched = true;
+            
+            // Record that user clicked letter for current trial
+            const currentIndex = this.currentRound - 1;
+            this.sequence[currentIndex].userClickedLetter = true;
+            
+            this.checkLetterMatch();
+            return false;
+        }
+    }
+
+    triggerButtonVisualFeedback(button) {
+        // Add visual click effect to button
+        if (button && !button.disabled) {
+            button.style.transform = 'scale(0.98)';
+            button.style.transition = 'transform 0.1s ease';
+            
+            // Reset the visual effect after a short delay
+            setTimeout(() => {
+                button.style.transform = '';
+                button.style.transition = '';
+            }, 150);
+        }
+    }
+
     checkTrialCompletion() {
         // Check if the current trial was completed successfully
         // A trial is successful if the user correctly identified or didn't identify matches
@@ -684,27 +743,6 @@ class DualNBackGame {
         this.updateScore();
     }
 
-    handlePositionClick() {
-        if (!this.isPlaying || this.currentRound <= this.nBack) return;
-        
-        // Record that user clicked position for current trial
-        const currentIndex = this.currentRound - 1;
-        this.sequence[currentIndex].userClickedPosition = true;
-        
-        console.log(`User clicked Position for trial ${this.currentRound}`);
-        this.checkPositionMatch();
-    }
-
-    handleLetterClick() {
-        if (!this.isPlaying || this.currentRound <= this.nBack) return;
-        
-        // Record that user clicked letter for current trial
-        const currentIndex = this.currentRound - 1;
-        this.sequence[currentIndex].userClickedLetter = true;
-        
-        console.log(`User clicked Letter for trial ${this.currentRound}`);
-        this.checkLetterMatch();
-    }
 
     checkMatches() {
         // This method is called after the response time expires for each trial
@@ -742,8 +780,8 @@ class DualNBackGame {
     }
 
     updateScore() {
-        // Score is based on correctly completed trials, not individual matches
-        this.score = this.correctTrials;
+        // Score is the total number of matches found (position + letter)
+        this.score = this.positionCorrect + this.letterCorrect;
         this.scoreValue.textContent = this.score;
     }
 
@@ -947,6 +985,10 @@ class DualNBackGame {
     async endSession() {
         this.pauseGame();
         
+        // Update final score displays
+        this.updateScore();
+        this.updateScoreDisplays();
+        
         // Track study data if enrolled
         await this.trackStudyData();
         
@@ -989,7 +1031,8 @@ class DualNBackGame {
         }
         
         this.showSessionComplete(message, totalCorrect);
-        this.resetSession();
+        // Don't reset session immediately - let user see the scores
+        // Reset will happen when they start a new game
     }
 
     resetSession() {

@@ -60,6 +60,12 @@
             overflow: hidden;
         }
         
+        .chart-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
         .supplement-tracker {
             background-color: #f8f9fa;
             padding: 30px;
@@ -154,7 +160,7 @@
             <img src="favicon.svg" alt="UltimateBrain.io Logo" class="logo-icon">
             UltimateBrain.io
         </a>
-        <a href="/" class="study-link">Back to Training</a>
+        <a href="/" class="study-link">Back</a>
     </div>
 
     <div id="game-container">
@@ -167,6 +173,20 @@
     </div>
 
     <script>
+        // Reset highest score calculation by clearing old session data format
+        // This is a one-time reset to ensure proper score calculation
+        const resetKey = 'highestScoreReset_v2';
+        if (!localStorage.getItem(resetKey)) {
+            const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+            if (userData.studyData && userData.studyData.sessions) {
+                // Reset all sessions to ensure clean score calculation
+                userData.studyData.sessions = [];
+                localStorage.setItem('studyUserData', JSON.stringify(userData));
+                console.log('Reset session data for clean highest score tracking');
+            }
+            localStorage.setItem(resetKey, 'true');
+        }
+
         // Check authentication
         const sessionToken = localStorage.getItem('sessionToken');
         const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
@@ -399,7 +419,7 @@
             // Find session with highest score (only count sessions with 30 trials)
             const completedSessions = sessions.filter(s => (s.trialsCompleted || s.totalTrials) >= 30);
             const highestScoringSession = completedSessions.reduce((highest, current) => {
-                // Use totalScore directly - it now represents correct trials, not matches
+                // Use totalScore directly - it represents total matches found (position + letter)
                 const currentScore = current.totalScore || 0;
                 const highestScore = highest.totalScore || 0;
                 return currentScore > highestScore ? current : highest;
@@ -417,7 +437,7 @@
                         <div class="stat-value">${totalSessions}</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Highest Total Score</div>
+                        <div class="stat-label">Highest Score</div>
                         <div class="stat-value">${highestScoringSession.totalScore || 0}</div>
                         <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${(highestScoringSession.totalScore || 0) > 0 ? 'Level ' + (highestScoringSession.nBackLevel || 2) + ' | ' + (highestScoringSession.trialsCompleted || 30) + ' trials' : 'Complete a 30-trial session'}</div>
                     </div>
@@ -436,6 +456,16 @@
                         <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${examScore ? 'Completed 25 days!' : 'Current streak: ' + currentStreak + '/25'}</div>
                     </div>
                 </div>
+                
+                ${sessions.length > 0 ? `
+                <div class="progress-section">
+                    <h2>Progress Over Time</h2>
+                    <p>Track your Total Score progression across sessions:</p>
+                    <div class="progress-chart">
+                        <canvas id="progress-canvas" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+                ` : ''}
                 
                 <div class="supplement-tracker">
                     <h2>Track Your Supplements & Techniques</h2>
@@ -519,7 +549,7 @@
                             <div class="session-entry">
                                 <strong>${new Date(session.timestamp).toLocaleDateString()}</strong> - 
                                 Level ${session.nBackLevel || 2} | 
-                                Score: ${session.totalScore || 0} | 
+                                Total Score: ${session.totalScore || 0} | 
                                 Position: ${session.positionCorrect || 0}/${session.positionTotal || 0} | 
                                 Letter: ${session.letterCorrect || 0}/${session.letterTotal || 0}
                             </div>
@@ -529,6 +559,146 @@
             `;
             
             document.getElementById('dashboard-content').innerHTML = dashboardHTML;
+            
+            // Draw progress chart if there are sessions
+            if (sessions.length > 0) {
+                setTimeout(() => drawProgressChart(sessions), 100);
+            }
+        }
+        
+        function drawProgressChart(sessions) {
+            const canvas = document.getElementById('progress-canvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            
+            // Set canvas size to match display size
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            
+            const width = rect.width;
+            const height = rect.height;
+            const padding = 40;
+            const chartWidth = width - padding * 2;
+            const chartHeight = height - padding * 2;
+            
+            // Prepare data - use last 20 sessions for readability
+            const recentSessions = sessions.slice(-20);
+            const scores = recentSessions.map(s => s.totalScore || 0);
+            const maxScore = Math.max(...scores, 1);
+            const minScore = Math.min(...scores, 0);
+            const scoreRange = Math.max(maxScore - minScore, 1);
+            
+            // Clear canvas
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#e9ecef';
+            ctx.lineWidth = 1;
+            
+            // Horizontal grid lines
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (i * chartHeight / 5);
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+                
+                // Y-axis labels
+                const value = Math.round(maxScore - (i * scoreRange / 5));
+                ctx.fillStyle = '#666';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(value.toString(), padding - 10, y + 4);
+            }
+            
+            // Vertical grid lines
+            const stepSize = Math.max(1, Math.floor(recentSessions.length / 5));
+            for (let i = 0; i < recentSessions.length; i += stepSize) {
+                const x = padding + (i * chartWidth / (recentSessions.length - 1));
+                ctx.beginPath();
+                ctx.moveTo(x, padding);
+                ctx.lineTo(x, height - padding);
+                ctx.stroke();
+            }
+            
+            // Draw the line chart
+            if (recentSessions.length > 0) {
+                ctx.strokeStyle = '#2552a3';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                recentSessions.forEach((session, index) => {
+                    const x = padding + (index * chartWidth / (recentSessions.length - 1));
+                    const normalizedScore = (scores[index] - minScore) / scoreRange;
+                    const y = padding + chartHeight - (normalizedScore * chartHeight);
+                    
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                
+                ctx.stroke();
+                
+                // Draw data points
+                ctx.fillStyle = '#2552a3';
+                recentSessions.forEach((session, index) => {
+                    const x = padding + (index * chartWidth / (recentSessions.length - 1));
+                    const normalizedScore = (scores[index] - minScore) / scoreRange;
+                    const y = padding + chartHeight - (normalizedScore * chartHeight);
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+                
+                // Add trend line
+                if (recentSessions.length > 1) {
+                    const firstScore = scores[0];
+                    const lastScore = scores[scores.length - 1];
+                    const firstY = padding + chartHeight - ((firstScore - minScore) / scoreRange * chartHeight);
+                    const lastY = padding + chartHeight - ((lastScore - minScore) / scoreRange * chartHeight);
+                    
+                    ctx.strokeStyle = '#ea6a4b';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(padding, firstY);
+                    ctx.lineTo(width - padding, lastY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Y-axis
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            // X-axis
+            ctx.moveTo(padding, height - padding);
+            ctx.lineTo(width - padding, height - padding);
+            ctx.stroke();
+            
+            // Add labels
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Session Progress', width / 2, height - 10);
+            
+            ctx.save();
+            ctx.translate(15, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillText('Total Score', 0, 0);
+            ctx.restore();
         }
         
         function saveSupplements() {
