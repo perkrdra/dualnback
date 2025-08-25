@@ -150,7 +150,7 @@ body {
 #game-container {
     background-color: white;
     padding: 30px;
-    margin-top: 20px;
+    margin-top: 10px;
     text-align: center;
     max-width: min(800px, 95vw);
     width: 100%;
@@ -1022,11 +1022,12 @@ button:disabled {
     
     #response-buttons {
         gap: 8px;
+        margin-top: 25px;
     }
     
     .response-btn {
-        font-size: 14px;
-        padding: 12px 8px;
+        font-size: 16px;
+        padding: 18px 12px;
     }
     
     #controls {

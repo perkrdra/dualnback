@@ -439,11 +439,46 @@ class DualNBackGame {
                 utterance.voice = selectedVoice;
             }
             
-            utterance.rate = 0.9;
-            utterance.pitch = 1.2;
-            utterance.volume = 0.8;
+            // Enhanced settings for Samsung devices
+            const isSamsung = /Samsung/i.test(navigator.userAgent);
+            if (isSamsung) {
+                utterance.rate = 0.7;     // Slower for better pronunciation
+                utterance.pitch = 1.0;    // Normal pitch for clarity
+                utterance.volume = 1.0;   // Maximum volume
+            } else {
+                utterance.rate = 0.9;
+                utterance.pitch = 1.2;
+                utterance.volume = 0.8;
+            }
             
-            window.speechSynthesis.speak(utterance);
+            // Enhanced audio handling for Samsung devices
+            if (isSamsung) {
+                // Add small delay to ensure speech synthesis is ready
+                setTimeout(() => {
+                    // Ensure speech synthesis is not busy
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel();
+                    }
+                    
+                    // Add error handling and retry for Samsung
+                    utterance.onerror = (event) => {
+                        console.log('Speech synthesis error on Samsung:', event);
+                        // Retry once with simpler text
+                        setTimeout(() => {
+                            const retryUtterance = new SpeechSynthesisUtterance(letter);
+                            if (selectedVoice) retryUtterance.voice = selectedVoice;
+                            retryUtterance.rate = 0.6;
+                            retryUtterance.pitch = 1.0;
+                            retryUtterance.volume = 1.0;
+                            window.speechSynthesis.speak(retryUtterance);
+                        }, 100);
+                    };
+                    
+                    window.speechSynthesis.speak(utterance);
+                }, 50);
+            } else {
+                window.speechSynthesis.speak(utterance);
+            }
         }
     }
 
@@ -492,36 +527,65 @@ class DualNBackGame {
                 voice.name.toLowerCase().includes('female')
             );
         } else if (isAndroid) {
-            // Android voice preferences - prioritize high-quality voices
-            // Priority order: Google > Samsung > others
-            preferredVoice = englishVoices.find(voice => 
-                voice.name.toLowerCase().includes('google') && 
-                voice.name.toLowerCase().includes('us') &&
-                voice.name.toLowerCase().includes('female')
-            ) || englishVoices.find(voice => 
-                voice.name.toLowerCase().includes('google') && 
-                voice.name.toLowerCase().includes('uk') &&
-                voice.name.toLowerCase().includes('female')
-            ) || englishVoices.find(voice => 
-                voice.name.toLowerCase().includes('google') && 
-                voice.lang === 'en-US'
-            ) || englishVoices.find(voice => 
-                voice.name.toLowerCase().includes('google') && 
-                voice.lang === 'en-GB'
-            ) || englishVoices.find(voice => 
-                voice.name.toLowerCase().includes('samsung') && 
-                voice.name.toLowerCase().includes('female') &&
-                voice.lang.startsWith('en-')
-            ) || englishVoices.find(voice => 
-                voice.name.toLowerCase().includes('samsung') && 
-                voice.lang === 'en-US'
-            ) || englishVoices.find(voice => 
-                voice.name.toLowerCase().includes('google')
-            ) || englishVoices.find(voice =>
-                voice.lang === 'en-US'
-            ) || englishVoices.find(voice =>
-                voice.lang === 'en-GB'
-            );
+            // Android voice preferences with enhanced Samsung support
+            const isSamsung = /Samsung/i.test(navigator.userAgent);
+            
+            if (isSamsung) {
+                // Samsung-specific voice selection for better quality
+                preferredVoice = englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('samsung') && 
+                    voice.name.toLowerCase().includes('neural') &&
+                    voice.lang === 'en-US'
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('samsung') && 
+                    voice.name.toLowerCase().includes('premium') &&
+                    voice.lang === 'en-US'
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('samsung') && 
+                    voice.name.toLowerCase().includes('high quality') &&
+                    voice.lang === 'en-US'
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('google') && 
+                    voice.lang === 'en-US'
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('samsung') && 
+                    voice.lang === 'en-US'
+                ) || englishVoices.find(voice =>
+                    voice.lang === 'en-US' && !voice.localService
+                ) || englishVoices.find(voice =>
+                    voice.lang === 'en-US'
+                );
+            } else {
+                // General Android voice selection
+                preferredVoice = englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('google') && 
+                    voice.name.toLowerCase().includes('us') &&
+                    voice.name.toLowerCase().includes('female')
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('google') && 
+                    voice.name.toLowerCase().includes('uk') &&
+                    voice.name.toLowerCase().includes('female')
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('google') && 
+                    voice.lang === 'en-US'
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('google') && 
+                    voice.lang === 'en-GB'
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('samsung') && 
+                    voice.name.toLowerCase().includes('female') &&
+                    voice.lang.startsWith('en-')
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('samsung') && 
+                    voice.lang === 'en-US'
+                ) || englishVoices.find(voice => 
+                    voice.name.toLowerCase().includes('google')
+                ) || englishVoices.find(voice =>
+                    voice.lang === 'en-US'
+                ) || englishVoices.find(voice =>
+                    voice.lang === 'en-GB'
+                );
+            }
         } else if (isMac) {
             // macOS voice preferences
             preferredVoice = englishVoices.find(voice => 
@@ -782,7 +846,8 @@ class DualNBackGame {
     updateScore() {
         // Score is the total number of matches found (position + letter)
         this.score = this.positionCorrect + this.letterCorrect;
-        this.scoreValue.textContent = this.score;
+        const totalPossible = this.positionTotal + this.letterTotal;
+        this.scoreValue.textContent = `${this.score}/${totalPossible}`;
     }
 
     showLetter(letter) {
