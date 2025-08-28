@@ -1,7 +1,7 @@
 class DualNBackGame {
     constructor() {
         this.gridSize = 3;
-        this.nBack = 2;
+        this.nBack = 3;
         this.score = 0;
         this.sequence = [];
         this.currentRound = 0;
@@ -14,7 +14,7 @@ class DualNBackGame {
         this.audioContext = null;
         
         // Training session tracking
-        this.trialsPerSession = 30;
+        this.trialsPerSession = 40;
         this.currentTrial = 0;
         this.positionCorrect = 0;
         this.letterCorrect = 0;
@@ -846,8 +846,13 @@ class DualNBackGame {
     updateScore() {
         // Score is the total number of matches found (position + letter)
         this.score = this.positionCorrect + this.letterCorrect;
-        const totalPossible = this.positionTotal + this.letterTotal;
-        this.scoreValue.textContent = `${this.score}/${totalPossible}`;
+        
+        // Calculate total possible matches based on sequence generation
+        const availablePositionMatches = this.actualPositionMatches || 0;
+        const availableLetterMatches = this.actualLetterMatches || 0;
+        const totalPossibleMatches = availablePositionMatches + availableLetterMatches;
+        
+        this.scoreValue.textContent = `${this.score}/${totalPossibleMatches}`;
     }
 
     showLetter(letter) {
@@ -1023,11 +1028,15 @@ class DualNBackGame {
         const positionScoreDiv = document.getElementById('position-score');
         const letterScoreDiv = document.getElementById('letter-score');
         
+        // Show matches found vs. total possible matches, not attempts made
+        const availablePositionMatches = this.actualPositionMatches || 0;
+        const availableLetterMatches = this.actualLetterMatches || 0;
+        
         if (this.positionScoreValue) {
-            this.positionScoreValue.textContent = `${this.positionCorrect}/${this.positionTotal}`;
+            this.positionScoreValue.textContent = `${this.positionCorrect}/${availablePositionMatches}`;
         }
         if (this.letterScoreValue) {
-            this.letterScoreValue.textContent = `${this.letterCorrect}/${this.letterTotal}`;
+            this.letterScoreValue.textContent = `${this.letterCorrect}/${availableLetterMatches}`;
         }
         
         // Show/hide scores based on mode
@@ -1142,6 +1151,8 @@ class DualNBackGame {
             positionTotal: this.positionTotal,
             letterCorrect: this.letterCorrect,
             letterTotal: this.letterTotal,
+            actualPositionMatches: this.actualPositionMatches,
+            actualLetterMatches: this.actualLetterMatches,
             totalScore: this.positionCorrect + this.letterCorrect,
             positionAccuracy: this.positionTotal > 0 ? (this.positionCorrect / this.positionTotal * 100).toFixed(1) : 0,
             letterAccuracy: this.letterTotal > 0 ? (this.letterCorrect / this.letterTotal * 100).toFixed(1) : 0,

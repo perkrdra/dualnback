@@ -550,9 +550,9 @@
                             <div class="session-entry">
                                 <strong>${new Date(session.timestamp).toLocaleDateString()}</strong> - 
                                 Level ${session.nBackLevel || 2} | 
-                                Total Score: ${session.totalScore || 0} | 
-                                Position: ${session.positionCorrect || 0}/${session.positionTotal || 0} | 
-                                Letter: ${session.letterCorrect || 0}/${session.letterTotal || 0}
+                                Total Score: ${session.totalScore || 0}/${(session.actualPositionMatches || 0) + (session.actualLetterMatches || 0)} | 
+                                Position: ${session.positionCorrect || 0}/${session.actualPositionMatches || 0} | 
+                                Letter: ${session.letterCorrect || 0}/${session.actualLetterMatches || 0}
                             </div>
                           `).join('')}
                     </div>
