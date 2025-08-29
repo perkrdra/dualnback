@@ -52,11 +52,11 @@
         }
         
         .progress-chart {
-            height: 300px;
+            height: 200px;
             background-color: white;
             border: 1px solid #e9ecef;
             border-radius: 5px;
-            padding: 20px;
+            padding: 15px;
             position: relative;
             overflow: hidden;
         }
@@ -72,6 +72,37 @@
             padding: 30px;
             border-radius: 10px;
             margin-bottom: 30px;
+        }
+        
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .collapsible-header:hover {
+            opacity: 0.8;
+        }
+        
+        .collapse-icon {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+        
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .supplement-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .supplement-content.collapsed {
+            max-height: 0;
         }
         
         .supplement-list {
@@ -256,7 +287,7 @@
         
         function calculateStudyScores(sessions) {
             if (sessions.length === 0) {
-                return { studyScores: [], examScore: null, currentStreak: 0 };
+                return { studyScores: [], examScore: null, currentStreak: 0, consecutiveDaysProgress: 0 };
             }
             
             // Get current user data to access supplements
@@ -359,7 +390,34 @@
                 i += consecutiveCount;
             }
             
-            return { studyScores, examScore, currentStreak };
+            // Calculate current consecutive days progress towards next study score
+            let consecutiveDaysProgress = 0;
+            if (qualifyingDays.length > 0) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // Check from the most recent qualifying day backwards
+                let recentConsecutiveDays = 0;
+                for (let i = qualifyingDays.length - 1; i >= 0; i--) {
+                    const dayDate = new Date(qualifyingDays[i].date);
+                    dayDate.setHours(0, 0, 0, 0);
+                    
+                    const expectedDate = new Date(today);
+                    expectedDate.setDate(today.getDate() - recentConsecutiveDays);
+                    
+                    // Check if this day is consecutive (today, yesterday, etc.)
+                    if (dayDate.getTime() === expectedDate.getTime()) {
+                        recentConsecutiveDays++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Progress is current consecutive days mod 5 (since study scores are awarded every 5 days)
+                consecutiveDaysProgress = recentConsecutiveDays % 5;
+            }
+            
+            return { studyScores, examScore, currentStreak, consecutiveDaysProgress };
         }
         
         // Helper function to get supplements that were active during a specific period
@@ -429,7 +487,7 @@
             const highestLevel = Math.max(...sessions.map(s => s.nBackLevel || 2), 2);
             
             // Calculate study scores and exam score
-            const { studyScores, examScore, currentStreak } = calculateStudyScores(sessions);
+            const { studyScores, examScore, currentStreak, consecutiveDaysProgress } = calculateStudyScores(sessions);
             
             const dashboardHTML = `
                 <div class="stats-grid">
@@ -449,7 +507,10 @@
                     <div class="stat-card">
                         <div class="stat-label">Study Scores</div>
                         <div class="stat-value">${studyScores.length}</div>
-                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${studyScores.length > 0 ? 'Latest: ' + studyScores[studyScores.length - 1].score : 'Complete 5 consecutive days'}</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                            ${studyScores.length > 0 ? 'Latest: ' + studyScores[studyScores.length - 1].score : 'Complete 5 consecutive days'}
+                            <br><span style="color: #2552a3; font-weight: bold;">${consecutiveDaysProgress}/5 consecutive days</span>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Exam Score</div>
@@ -469,35 +530,86 @@
                 ` : ''}
                 
                 <div class="supplement-tracker">
-                    <h2>Track Your Supplements & Techniques</h2>
-                    <p>Select what you're currently using to enhance your training:</p>
-                    <div class="supplement-list">
-                        <div class="supplement-item">
-                            <input type="checkbox" id="creatine" ${supplements.includes('creatine') ? 'checked' : ''}>
-                            <label for="creatine">Creatine</label>
+                    <div class="collapsible-header" onclick="toggleSupplementSection()">
+                        <div>
+                            <h2>Track Your Enhancements & Techniques</h2>
+                            <p>Select what you're currently using to enhance your training:</p>
                         </div>
-                        <div class="supplement-item">
-                            <input type="checkbox" id="choline" ${supplements.includes('choline') ? 'checked' : ''}>
-                            <label for="choline">Choline</label>
-                        </div>
-                        <div class="supplement-item">
-                            <input type="checkbox" id="lions-mane" ${supplements.includes('lions-mane') ? 'checked' : ''}>
-                            <label for="lions-mane">Lion's Mane</label>
-                        </div>
-                        <div class="supplement-item">
-                            <input type="checkbox" id="breathing" ${supplements.includes('breathing') ? 'checked' : ''}>
-                            <label for="breathing">Breathing Exercises</label>
-                        </div>
-                        <div class="supplement-item">
-                            <input type="checkbox" id="meditation" ${supplements.includes('meditation') ? 'checked' : ''}>
-                            <label for="meditation">Meditation</label>
-                        </div>
-                        <div class="supplement-item">
-                            <input type="checkbox" id="other" ${supplements.includes('other') ? 'checked' : ''}>
-                            <label for="other">Other Supplements</label>
-                        </div>
+                        <div class="collapse-icon" id="collapse-icon">▼</div>
                     </div>
-                    <button class="save-btn" onclick="saveSupplements()">Save Supplements</button>
+                    <div class="supplement-content" id="supplement-content">
+                        <div class="supplement-list">
+                            <div class="supplement-item">
+                                <input type="checkbox" id="creatine" ${supplements.includes('creatine') ? 'checked' : ''}>
+                                <label for="creatine">Creatine</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="choline" ${supplements.includes('choline') ? 'checked' : ''}>
+                                <label for="choline">Choline</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="lions-mane" ${supplements.includes('lions-mane') ? 'checked' : ''}>
+                                <label for="lions-mane">Lion's Mane</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="bacopa" ${supplements.includes('bacopa') ? 'checked' : ''}>
+                                <label for="bacopa">Bacopa Monnieri</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="l-theanine-caffeine" ${supplements.includes('l-theanine-caffeine') ? 'checked' : ''}>
+                                <label for="l-theanine-caffeine">L-Theanine + Caffeine</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="pqq" ${supplements.includes('pqq') ? 'checked' : ''}>
+                                <label for="pqq">PQQ</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="phosphatidylserine" ${supplements.includes('phosphatidylserine') ? 'checked' : ''}>
+                                <label for="phosphatidylserine">Phosphatidylserine</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="aniracetam" ${supplements.includes('aniracetam') ? 'checked' : ''}>
+                                <label for="aniracetam">Aniracetam</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="huperzine-a" ${supplements.includes('huperzine-a') ? 'checked' : ''}>
+                                <label for="huperzine-a">Huperzine A</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="modafinil" ${supplements.includes('modafinil') ? 'checked' : ''}>
+                                <label for="modafinil">Modafinil</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="alcar" ${supplements.includes('alcar') ? 'checked' : ''}>
+                                <label for="alcar">ALCAR</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="borage-oil" ${supplements.includes('borage-oil') ? 'checked' : ''}>
+                                <label for="borage-oil">Borage Oil</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="sleep-pineal-peptides" ${supplements.includes('sleep-pineal-peptides') ? 'checked' : ''}>
+                                <label for="sleep-pineal-peptides">Sleep & Pineal Peptides</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="breathing-exercises" ${supplements.includes('breathing-exercises') ? 'checked' : ''}>
+                                <label for="breathing-exercises">Breathing Exercises</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="meditation" ${supplements.includes('meditation') ? 'checked' : ''}>
+                                <label for="meditation">Meditation</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="nicotine" ${supplements.includes('nicotine') ? 'checked' : ''}>
+                                <label for="nicotine">Nicotine (Occasional)</label>
+                            </div>
+                            <div class="supplement-item">
+                                <input type="checkbox" id="other" ${supplements.includes('other') ? 'checked' : ''}>
+                                <label for="other">Other</label>
+                            </div>
+                        </div>
+                        <button class="save-btn" onclick="saveSupplements()">Save Enhancements</button>
+                    </div>
                 </div>
                 
                 ${studyScores.length > 0 ? `
@@ -541,22 +653,6 @@
                     </div>
                 </div>
                 ` : ''}
-                
-                <div class="progress-section">
-                    <h2>Recent Sessions</h2>
-                    <div class="session-log">
-                        ${sessions.length === 0 ? '<p class="no-data">No sessions recorded yet. Start training to see your progress!</p>' : 
-                          sessions.slice(-10).reverse().map(session => `
-                            <div class="session-entry">
-                                <strong>${new Date(session.timestamp).toLocaleDateString()}</strong> - 
-                                Level ${session.nBackLevel || 2} | 
-                                Total Score: ${session.totalScore || 0}/${(session.actualPositionMatches || 0) + (session.actualLetterMatches || 0)} | 
-                                Position: ${session.positionCorrect || 0}/${session.actualPositionMatches || 0} | 
-                                Letter: ${session.letterCorrect || 0}/${session.actualLetterMatches || 0}
-                            </div>
-                          `).join('')}
-                    </div>
-                </div>
             `;
             
             document.getElementById('dashboard-content').innerHTML = dashboardHTML;
@@ -581,12 +677,12 @@
             
             const width = rect.width;
             const height = rect.height;
-            const padding = 40;
+            const padding = 30;
             const chartWidth = width - padding * 2;
             const chartHeight = height - padding * 2;
             
-            // Prepare data - use last 20 sessions for readability
-            const recentSessions = sessions.slice(-20);
+            // Prepare data - use more sessions for horizontal layout (last 30 sessions)
+            const recentSessions = sessions.slice(-30);
             const scores = recentSessions.map(s => s.totalScore || 0);
             const maxScore = Math.max(...scores, 1);
             const minScore = Math.min(...scores, 0);
@@ -600,26 +696,26 @@
             ctx.strokeStyle = '#e9ecef';
             ctx.lineWidth = 1;
             
-            // Horizontal grid lines
-            for (let i = 0; i <= 5; i++) {
-                const y = padding + (i * chartHeight / 5);
+            // Horizontal grid lines (fewer for compact layout)
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (i * chartHeight / 4);
                 ctx.beginPath();
                 ctx.moveTo(padding, y);
                 ctx.lineTo(width - padding, y);
                 ctx.stroke();
                 
-                // Y-axis labels
-                const value = Math.round(maxScore - (i * scoreRange / 5));
+                // Y-axis labels (smaller font for horizontal layout)
+                const value = Math.round(maxScore - (i * scoreRange / 4));
                 ctx.fillStyle = '#666';
-                ctx.font = '12px Arial';
+                ctx.font = '10px Arial';
                 ctx.textAlign = 'right';
-                ctx.fillText(value.toString(), padding - 10, y + 4);
+                ctx.fillText(value.toString(), padding - 5, y + 3);
             }
             
-            // Vertical grid lines
-            const stepSize = Math.max(1, Math.floor(recentSessions.length / 5));
+            // Vertical grid lines (more spaced out for horizontal emphasis)
+            const stepSize = Math.max(1, Math.floor(recentSessions.length / 8));
             for (let i = 0; i < recentSessions.length; i += stepSize) {
-                const x = padding + (i * chartWidth / (recentSessions.length - 1));
+                const x = padding + (i * chartWidth / Math.max(recentSessions.length - 1, 1));
                 ctx.beginPath();
                 ctx.moveTo(x, padding);
                 ctx.lineTo(x, height - padding);
@@ -633,7 +729,7 @@
                 ctx.beginPath();
                 
                 recentSessions.forEach((session, index) => {
-                    const x = padding + (index * chartWidth / (recentSessions.length - 1));
+                    const x = padding + (index * chartWidth / Math.max(recentSessions.length - 1, 1));
                     const normalizedScore = (scores[index] - minScore) / scoreRange;
                     const y = padding + chartHeight - (normalizedScore * chartHeight);
                     
@@ -646,15 +742,15 @@
                 
                 ctx.stroke();
                 
-                // Draw data points
+                // Draw data points (smaller for horizontal layout)
                 ctx.fillStyle = '#2552a3';
                 recentSessions.forEach((session, index) => {
-                    const x = padding + (index * chartWidth / (recentSessions.length - 1));
+                    const x = padding + (index * chartWidth / Math.max(recentSessions.length - 1, 1));
                     const normalizedScore = (scores[index] - minScore) / scoreRange;
                     const y = padding + chartHeight - (normalizedScore * chartHeight);
                     
                     ctx.beginPath();
-                    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                    ctx.arc(x, y, 2, 0, 2 * Math.PI);
                     ctx.fill();
                 });
                 
@@ -688,18 +784,34 @@
             ctx.lineTo(width - padding, height - padding);
             ctx.stroke();
             
-            // Add labels
+            // Add labels (optimized for horizontal layout)
             ctx.fillStyle = '#333';
-            ctx.font = 'bold 14px Arial';
+            ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Session Progress', width / 2, height - 10);
+            ctx.fillText('Recent Sessions →', width / 2, height - 5);
             
             ctx.save();
-            ctx.translate(15, height / 2);
+            ctx.translate(10, height / 2);
             ctx.rotate(-Math.PI / 2);
             ctx.textAlign = 'center';
-            ctx.fillText('Total Score', 0, 0);
+            ctx.font = 'bold 10px Arial';
+            ctx.fillText('Score', 0, 0);
             ctx.restore();
+        }
+        
+        function toggleSupplementSection() {
+            const content = document.getElementById('supplement-content');
+            const icon = document.getElementById('collapse-icon');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                icon.classList.remove('collapsed');
+                icon.textContent = '▼';
+            } else {
+                content.classList.add('collapsed');
+                icon.classList.add('collapsed');
+                icon.textContent = '▶';
+            }
         }
         
         function saveSupplements() {

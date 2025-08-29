@@ -47,10 +47,7 @@ class DualNBackGame {
         this.positionBtn = document.getElementById('position-btn');
         this.letterBtn = document.getElementById('letter-btn');
         this.gameModeSelect = document.getElementById('game-mode');
-        this.supplementSelect1 = document.getElementById('current-supplement-1');
-        this.supplementSelect2 = document.getElementById('current-supplement-2');
-        this.supplementSelect3 = document.getElementById('current-supplement-3');
-        this.supplementSelect4 = document.getElementById('current-supplement-4');
+        // Supplement selectors removed from main interface
         this.speedSlider = document.getElementById('speed-slider');
         this.speedValue = document.getElementById('speed-value');
         
@@ -94,10 +91,6 @@ class DualNBackGame {
         this.positionBtn.addEventListener('click', () => this.handlePositionClick());
         this.letterBtn.addEventListener('click', () => this.handleLetterClick());
         this.gameModeSelect.addEventListener('change', () => this.handleModeChange());
-        this.supplementSelect1.addEventListener('change', () => this.handleSupplementChange());
-        this.supplementSelect2.addEventListener('change', () => this.handleSupplementChange());
-        this.supplementSelect3.addEventListener('change', () => this.handleSupplementChange());
-        this.supplementSelect4.addEventListener('change', () => this.handleSupplementChange());
         this.speedSlider.addEventListener('input', () => this.handleSpeedChange());
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
         
@@ -126,10 +119,6 @@ class DualNBackGame {
         this.updateButtonsForMode();
         this.gameModeSelect.disabled = true;
         this.speedSlider.disabled = true;
-        this.supplementSelect1.disabled = true;
-        this.supplementSelect2.disabled = true;
-        this.supplementSelect3.disabled = true;
-        this.supplementSelect4.disabled = true;
     }
 
     pauseGame() {
@@ -141,10 +130,6 @@ class DualNBackGame {
         this.letterBtn.disabled = true;
         this.gameModeSelect.disabled = false;
         this.speedSlider.disabled = false;
-        this.supplementSelect1.disabled = false;
-        this.supplementSelect2.disabled = false;
-        this.supplementSelect3.disabled = false;
-        this.supplementSelect4.disabled = false;
     }
 
     resetGame() {
@@ -682,23 +667,7 @@ class DualNBackGame {
         console.log(`Game mode changed to: ${this.gameMode}`);
     }
 
-    handleSupplementChange() {
-        if (this.isPlaying) return;
-        
-        // Get values from all four selectors
-        const supplement1 = this.supplementSelect1.value;
-        const supplement2 = this.supplementSelect2.value;
-        const supplement3 = this.supplementSelect3.value;
-        const supplement4 = this.supplementSelect4.value;
-        
-        // Create array of selected supplements (excluding empty values)
-        this.currentSupplements = [supplement1, supplement2, supplement3, supplement4].filter(s => s && s.trim());
-        
-        // Remove duplicates if user selected the same supplement twice
-        this.currentSupplements = [...new Set(this.currentSupplements)];
-        
-        console.log(`Current supplements changed to: ${this.currentSupplements.length > 0 ? this.currentSupplements.join(', ') : 'None'}`);
-    }
+    // Supplement tracking moved to dashboard - no longer handled in main interface
 
     handleSpeedChange() {
         if (this.isPlaying) return;

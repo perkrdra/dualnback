@@ -12,7 +12,7 @@ body {
     background-color: white;
     margin: 0;
     padding: 0;
-    padding-top: 70px; /* Add padding for fixed header */
+    padding-top: 60px; /* Add padding for fixed header */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -149,8 +149,8 @@ body {
 
 #game-container {
     background-color: white;
-    padding: 30px;
-    margin-top: 10px;
+    padding: 20px;
+    margin-top: 0px;
     text-align: center;
     max-width: min(800px, 95vw);
     width: 100%;
@@ -610,6 +610,8 @@ button:disabled {
 
 .feature strong {
     color: #2552a3;
+    display: block;
+    margin-bottom: 8px;
 }
 
 .cta-section {
@@ -1119,7 +1121,11 @@ button:disabled {
     }
     
     .feature {
-        padding: 12px;
+        padding: 15px;
+    }
+    
+    .feature strong {
+        margin-bottom: 12px;
     }
     
     .cta-section {
