@@ -486,6 +486,16 @@
             
             const highestLevel = Math.max(...sessions.map(s => s.nBackLevel || 2), 2);
             
+            // Calculate highest score per N-back level
+            const scoresByLevel = {};
+            completedSessions.forEach(session => {
+                const level = session.nBackLevel || 2;
+                const score = session.totalScore || 0;
+                if (!scoresByLevel[level] || score > scoresByLevel[level]) {
+                    scoresByLevel[level] = score;
+                }
+            });
+            
             // Calculate study scores and exam score
             const { studyScores, examScore, currentStreak, consecutiveDaysProgress } = calculateStudyScores(sessions);
             
@@ -515,7 +525,7 @@
                     <div class="stat-card">
                         <div class="stat-label">Exam Score</div>
                         <div class="stat-value">${examScore ? examScore.score : 'Not achieved'}</div>
-                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${examScore ? 'Completed 25 days!' : 'Current streak: ' + currentStreak + '/25'}</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${examScore ? 'Completed 25 days!' : currentStreak + ' of 25 consecutive days'}</div>
                     </div>
                 </div>
                 
@@ -584,6 +594,10 @@
                                 <label for="alcar">ALCAR</label>
                             </div>
                             <div class="supplement-item">
+                                <input type="checkbox" id="caprylic-acid" ${supplements.includes('caprylic-acid') ? 'checked' : ''}>
+                                <label for="caprylic-acid">Caprylic Acid (C8)</label>
+                            </div>
+                            <div class="supplement-item">
                                 <input type="checkbox" id="borage-oil" ${supplements.includes('borage-oil') ? 'checked' : ''}>
                                 <label for="borage-oil">Borage Oil</label>
                             </div>
@@ -650,6 +664,21 @@
                                 </span>
                             ` : '<br><span style="font-size: 0.9em; color: #666; font-weight: normal;">No supplements recorded</span>'}
                         </div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${Object.keys(scoresByLevel).length > 0 ? `
+                <div class="progress-section">
+                    <h2>Highest Scores by N-Back Level</h2>
+                    <p>Your best performance at each difficulty level:</p>
+                    <div class="study-scores-list">
+                        ${Object.keys(scoresByLevel).sort((a, b) => parseInt(a) - parseInt(b)).map(level => `
+                            <div class="study-score-entry">
+                                <strong>Level ${level}-Back</strong> - 
+                                Highest Score: ${scoresByLevel[level]}
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
                 ` : ''}
