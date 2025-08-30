@@ -502,14 +502,29 @@
                         <div class="stat-label">Daily Goal</div>
                         <div class="stat-value">${todaysProgress}/5 sessions</div>
                         <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
-                            Complete 5 sessions to earn 1 study point
-                            <br><span style="color: #2552a3; font-weight: bold;">Total Study Points: ${totalStudyPoints || studyScores.length}</span>
+                            <span style="color: #2552a3; font-weight: bold;">Total Study Points: ${totalStudyPoints || studyScores.length}</span>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Study Streak</div>
-                        <div class="stat-value">${examScore ? 'Completed!' : currentStreak + '/25 days'}</div>
-                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${examScore ? 'Elite level achieved!' : 'Complete 25 consecutive days (10+ sessions each)'}</div>
+                        <div class="stat-value">${currentStreak >= 100 ? 'Master!' : currentStreak + '/100 days'}</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                            <span style="color: #2552a3; font-weight: bold;">
+                                ${(() => {
+                                    if (currentStreak >= 100) return 'Level 10: Grandmaster';
+                                    else if (currentStreak >= 90) return 'Level 9: Sage';
+                                    else if (currentStreak >= 80) return 'Level 8: Virtuoso';
+                                    else if (currentStreak >= 70) return 'Level 7: Expert';
+                                    else if (currentStreak >= 60) return 'Level 6: Scholar';
+                                    else if (currentStreak >= 50) return 'Level 5: Adept';
+                                    else if (currentStreak >= 40) return 'Level 4: Specialist';
+                                    else if (currentStreak >= 30) return 'Level 3: Practitioner';
+                                    else if (currentStreak >= 20) return 'Level 2: Student';
+                                    else if (currentStreak >= 10) return 'Level 1: Novice';
+                                    else return 'Level 0: Beginner';
+                                })()}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 
@@ -610,27 +625,6 @@
                     </div>
                 </div>
                 
-                ${studyScores.length > 0 ? `
-                <div class="progress-section">
-                    <h2>Study Points Earned</h2>
-                    <p>Each study point represents a day where you completed 5+ training sessions. Keep the streak alive!</p>
-                    <div class="study-scores-list">
-                        ${studyScores.map((score, index) => `
-                            <div class="study-score-entry">
-                                <strong>Study Point #${index + 1}</strong> - 
-                                Average Score: ${score.score} | 
-                                Date: ${score.completedDate.toLocaleDateString()} | 
-                                ${score.sessionsCompleted} sessions completed
-                                ${score.supplements && score.supplements.length > 0 ? `
-                                    <br><span style="font-size: 0.9em; color: #2552a3; font-weight: normal;">
-                                        Enhancements: ${score.supplements.map(s => s.name).join(', ')}
-                                    </span>
-                                ` : '<br><span style="font-size: 0.9em; color: #666; font-weight: normal;">No enhancements recorded</span>'}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
                 
                 ${examScore ? `
                 <div class="progress-section">
