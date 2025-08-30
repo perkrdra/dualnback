@@ -12,6 +12,7 @@ class DualNBackGame {
         this.positionMatched = false;
         this.soundMatched = false;
         this.audioContext = null;
+        this.isMuted = true; // Default to muted
         
         // Training session tracking
         this.trialsPerSession = 40;
@@ -47,6 +48,7 @@ class DualNBackGame {
         this.positionBtn = document.getElementById('position-btn');
         this.letterBtn = document.getElementById('letter-btn');
         this.gameModeSelect = document.getElementById('game-mode');
+        this.muteBtn = document.getElementById('mute-btn');
         // Supplement selectors removed from main interface
         this.speedSlider = document.getElementById('speed-slider');
         this.speedValue = document.getElementById('speed-value');
@@ -65,6 +67,7 @@ class DualNBackGame {
         this.updateTrialDisplay();
         this.updateTrialButtons();
         this.updateScoreDisplays();
+        this.updateMuteButton();
         this.updateButtonsForMode();
         
         // Session tracking
@@ -92,6 +95,7 @@ class DualNBackGame {
         this.letterBtn.addEventListener('click', () => this.handleLetterClick());
         this.gameModeSelect.addEventListener('change', () => this.handleModeChange());
         this.speedSlider.addEventListener('input', () => this.handleSpeedChange());
+        this.muteBtn.addEventListener('click', () => this.toggleMute());
         document.addEventListener('keydown', (e) => this.handleKeyPress(e));
         
         // Add right-click support for Letter (Z) button
@@ -397,7 +401,29 @@ class DualNBackGame {
         }
     }
 
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+        this.updateMuteButton();
+    }
+    
+    updateMuteButton() {
+        if (this.isMuted) {
+            this.muteBtn.textContent = '🔇';
+            this.muteBtn.classList.remove('unmuted');
+            this.muteBtn.title = 'Audio is muted (click to unmute)';
+        } else {
+            this.muteBtn.textContent = '🔊';
+            this.muteBtn.classList.add('unmuted');
+            this.muteBtn.title = 'Audio is on (click to mute)';
+        }
+    }
+
     playSound(letter) {
+        // Skip playing sound if muted
+        if (this.isMuted) {
+            return;
+        }
+        
         // Use Web Speech API to read the letter name aloud
         if ('speechSynthesis' in window) {
             // Initialize audio context on user interaction (iOS requirement)

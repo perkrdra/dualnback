@@ -318,6 +318,29 @@ button:disabled {
     cursor: not-allowed;
 }
 
+.mute-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: opacity 0.3s ease;
+    margin-right: 10px;
+    box-shadow: none;
+}
+
+.mute-btn:hover {
+    opacity: 0.8;
+}
+
+.mute-btn.unmuted {
+    opacity: 1;
+}
+
+.mute-btn:not(.unmuted) {
+    opacity: 0.6;
+}
+
 #scores-container {
     display: flex;
     justify-content: center;
@@ -1042,8 +1065,10 @@ button:disabled {
     }
     
     #scores-container {
-        flex-direction: column;
-        gap: 10px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
     }
     
     .score-item {
