@@ -499,17 +499,17 @@
                         <div class="stat-value">${highestLevel}</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Study Points</div>
-                        <div class="stat-value">${totalStudyPoints || studyScores.length}</div>
+                        <div class="stat-label">Daily Goal</div>
+                        <div class="stat-value">${todaysProgress}/5 sessions</div>
                         <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
-                            1 point per day with 5+ sessions
-                            <br><span style="color: #2552a3; font-weight: bold;">Today: ${todaysProgress}/5 sessions</span>
+                            Complete 5 sessions to earn 1 study point
+                            <br><span style="color: #2552a3; font-weight: bold;">Total Study Points: ${totalStudyPoints || studyScores.length}</span>
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Exam Score</div>
-                        <div class="stat-value">${examScore ? examScore.score : 'Not achieved'}</div>
-                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${examScore ? 'Completed 25 days!' : currentStreak + ' of 25 consecutive days'}</div>
+                        <div class="stat-label">Study Streak</div>
+                        <div class="stat-value">${examScore ? 'Completed!' : currentStreak + '/25 days'}</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 5px;">${examScore ? 'Elite level achieved!' : 'Complete 25 consecutive days (10+ sessions each)'}</div>
                     </div>
                 </div>
                 
