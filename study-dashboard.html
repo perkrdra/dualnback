@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         .dashboard-container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 40px auto;
             padding: 20px;
         }
@@ -52,13 +52,14 @@
         }
         
         .progress-chart {
-            height: 200px;
+            height: 300px;
             background-color: white;
             border: 1px solid #e9ecef;
             border-radius: 5px;
-            padding: 15px;
+            padding: 10px;
             position: relative;
             overflow: hidden;
+            width: 100%;
         }
         
         .chart-canvas {
@@ -96,8 +97,8 @@
         }
         
         .supplement-content {
-            max-height: 500px;
-            overflow: hidden;
+            max-height: 800px;
+            overflow: visible;
             transition: max-height 0.3s ease;
         }
         
@@ -287,7 +288,7 @@
         
         function calculateStudyScores(sessions) {
             if (sessions.length === 0) {
-                return { studyScores: [], examScore: null, currentStreak: 0, consecutiveDaysProgress: 0 };
+                return { studyScores: [], examScore: null, currentStreak: 0, consecutiveDaysProgress: 0, todaysProgress: 0 };
             }
             
             // Get current user data to access supplements
@@ -304,17 +305,32 @@
                 sessionsByDate[date].push(session);
             });
             
-            // Get sorted dates
-            const sortedDates = Object.keys(sessionsByDate).sort((a, b) => new Date(a) - new Date(b));
-            
-            // Track consecutive days with 10+ sessions
+            // Calculate study scores (1 point per day with 5+ sessions)
             const studyScores = [];
-            let currentStreak = 0;
-            let streakStartDate = null;
-            let consecutiveDays = 0;
-            let examScore = null;
+            let totalStudyPoints = 0;
             
-            // Check each date for 10+ sessions requirement
+            // Check each date for 5+ sessions requirement
+            for (const [date, daySessions] of Object.entries(sessionsByDate)) {
+                if (daySessions.length >= 5) {
+                    const averageScore = Math.round(daySessions.reduce((sum, s) => sum + (s.totalScore || 0), 0) / daySessions.length);
+                    const activeSupplement = getActiveSupplements(currentSupplements, new Date(date), sessions);
+                    
+                    studyScores.push({
+                        completedDate: new Date(date),
+                        score: averageScore,
+                        sessionsCompleted: daySessions.length,
+                        supplements: activeSupplement
+                    });
+                    totalStudyPoints++;
+                }
+            }
+            
+            // Calculate today's progress (how many sessions completed today)
+            const today = new Date().toDateString();
+            const todaysProgress = sessionsByDate[today]?.length || 0;
+            
+            // Calculate exam score (still based on 25 consecutive days with 10+ sessions)
+            const sortedDates = Object.keys(sessionsByDate).sort((a, b) => new Date(a) - new Date(b));
             const qualifyingDays = [];
             for (const date of sortedDates) {
                 if (sessionsByDate[date].length >= 10) {
@@ -326,12 +342,14 @@
                 }
             }
             
-            // Process consecutive qualifying days
+            let examScore = null;
+            let currentStreak = 0;
+            
+            // Check for exam score (25 consecutive days with 10+ sessions)
             let i = 0;
             while (i < qualifyingDays.length) {
                 let consecutiveCount = 1;
                 let currentDate = qualifyingDays[i].date;
-                let groupAverageScore = qualifyingDays[i].averageScore;
                 let totalScore = qualifyingDays[i].averageScore;
                 
                 // Count consecutive days
@@ -348,76 +366,38 @@
                     }
                 }
                 
-                // Calculate group average score
-                groupAverageScore = Math.round(totalScore / consecutiveCount);
-                
-                // Get supplements that were active during this period
-                const activeSuuplements = getActiveSupplements(currentSupplements, qualifyingDays[i].date, sessions);
-                
-                // Award study scores for every 5 consecutive days
-                const studyPeriodsCompleted = Math.floor(consecutiveCount / 5);
-                for (let period = 0; period < studyPeriodsCompleted; period++) {
-                    const periodEndDate = new Date(qualifyingDays[i].date);
-                    periodEndDate.setDate(periodEndDate.getDate() + ((period + 1) * 5) - 1);
-                    
-                    studyScores.push({
-                        completedDate: periodEndDate,
-                        score: groupAverageScore,
-                        daysInStreak: (period + 1) * 5,
-                        supplements: activeSuuplements
-                    });
-                }
-                
                 // Check for exam score (25 consecutive days)
                 if (consecutiveCount >= 25 && !examScore) {
+                    const groupAverageScore = Math.round(totalScore / consecutiveCount);
+                    const activeSupplements = getActiveSupplements(currentSupplements, qualifyingDays[i].date, sessions);
                     examScore = {
                         score: groupAverageScore,
-                        supplements: activeSuuplements,
+                        supplements: activeSupplements,
                         completedDate: new Date(qualifyingDays[i].date)
                     };
                 }
                 
-                // Update current streak if this is the most recent group and includes today or recent days
+                // Update current streak for exam progress
                 const today = new Date();
                 const lastDayInGroup = new Date(qualifyingDays[i].date);
                 lastDayInGroup.setDate(lastDayInGroup.getDate() + consecutiveCount - 1);
                 const daysSinceLastDay = Math.floor((today - lastDayInGroup) / (1000 * 60 * 60 * 24));
                 
-                if (daysSinceLastDay <= 1) { // If the streak ended today or yesterday
+                if (daysSinceLastDay <= 1) {
                     currentStreak = consecutiveCount;
                 }
                 
                 i += consecutiveCount;
             }
             
-            // Calculate current consecutive days progress towards next study score
-            let consecutiveDaysProgress = 0;
-            if (qualifyingDays.length > 0) {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                // Check from the most recent qualifying day backwards
-                let recentConsecutiveDays = 0;
-                for (let i = qualifyingDays.length - 1; i >= 0; i--) {
-                    const dayDate = new Date(qualifyingDays[i].date);
-                    dayDate.setHours(0, 0, 0, 0);
-                    
-                    const expectedDate = new Date(today);
-                    expectedDate.setDate(today.getDate() - recentConsecutiveDays);
-                    
-                    // Check if this day is consecutive (today, yesterday, etc.)
-                    if (dayDate.getTime() === expectedDate.getTime()) {
-                        recentConsecutiveDays++;
-                    } else {
-                        break;
-                    }
-                }
-                
-                // Progress is current consecutive days mod 5 (since study scores are awarded every 5 days)
-                consecutiveDaysProgress = recentConsecutiveDays % 5;
-            }
-            
-            return { studyScores, examScore, currentStreak, consecutiveDaysProgress };
+            return { 
+                studyScores, 
+                examScore, 
+                currentStreak, 
+                consecutiveDaysProgress: 0, // Not used in new system
+                todaysProgress,
+                totalStudyPoints
+            };
         }
         
         // Helper function to get supplements that were active during a specific period
@@ -491,13 +471,17 @@
             completedSessions.forEach(session => {
                 const level = session.nBackLevel || 2;
                 const score = session.totalScore || 0;
-                if (!scoresByLevel[level] || score > scoresByLevel[level]) {
-                    scoresByLevel[level] = score;
+                if (!scoresByLevel[level] || score > scoresByLevel[level].score) {
+                    scoresByLevel[level] = {
+                        score: score,
+                        session: session,
+                        supplements: session.currentSupplements || (session.currentSupplement ? [session.currentSupplement] : [])
+                    };
                 }
             });
             
             // Calculate study scores and exam score
-            const { studyScores, examScore, currentStreak, consecutiveDaysProgress } = calculateStudyScores(sessions);
+            const { studyScores, examScore, currentStreak, consecutiveDaysProgress, todaysProgress, totalStudyPoints } = calculateStudyScores(sessions);
             
             const dashboardHTML = `
                 <div class="stats-grid">
@@ -515,11 +499,11 @@
                         <div class="stat-value">${highestLevel}</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Study Scores</div>
-                        <div class="stat-value">${studyScores.length}</div>
+                        <div class="stat-label">Study Points</div>
+                        <div class="stat-value">${totalStudyPoints || studyScores.length}</div>
                         <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
-                            ${studyScores.length > 0 ? 'Latest: ' + studyScores[studyScores.length - 1].score : 'Complete 5 consecutive days'}
-                            <br><span style="color: #2552a3; font-weight: bold;">${consecutiveDaysProgress}/5 consecutive days</span>
+                            1 point per day with 5+ sessions
+                            <br><span style="color: #2552a3; font-weight: bold;">Today: ${todaysProgress}/5 sessions</span>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -628,20 +612,20 @@
                 
                 ${studyScores.length > 0 ? `
                 <div class="progress-section">
-                    <h2>Study Scores Achieved</h2>
-                    <p>Each study score represents 5 consecutive days of completing 10+ training sessions daily.</p>
+                    <h2>Study Points Earned</h2>
+                    <p>Each study point represents a day where you completed 5+ training sessions. Keep the streak alive!</p>
                     <div class="study-scores-list">
                         ${studyScores.map((score, index) => `
                             <div class="study-score-entry">
-                                <strong>Study Score #${index + 1}</strong> - 
-                                Score: ${score.score} | 
-                                Completed: ${score.completedDate.toLocaleDateString()} | 
-                                ${score.daysInStreak} consecutive days
+                                <strong>Study Point #${index + 1}</strong> - 
+                                Average Score: ${score.score} | 
+                                Date: ${score.completedDate.toLocaleDateString()} | 
+                                ${score.sessionsCompleted} sessions completed
                                 ${score.supplements && score.supplements.length > 0 ? `
                                     <br><span style="font-size: 0.9em; color: #2552a3; font-weight: normal;">
-                                        Supplements: ${score.supplements.map(s => s.name).join(', ')}
+                                        Enhancements: ${score.supplements.map(s => s.name).join(', ')}
                                     </span>
-                                ` : '<br><span style="font-size: 0.9em; color: #666; font-weight: normal;">No supplements recorded</span>'}
+                                ` : '<br><span style="font-size: 0.9em; color: #666; font-weight: normal;">No enhancements recorded</span>'}
                             </div>
                         `).join('')}
                     </div>
@@ -673,12 +657,22 @@
                     <h2>Highest Scores by N-Back Level</h2>
                     <p>Your best performance at each difficulty level:</p>
                     <div class="study-scores-list">
-                        ${Object.keys(scoresByLevel).sort((a, b) => parseInt(a) - parseInt(b)).map(level => `
+                        ${Object.keys(scoresByLevel).sort((a, b) => parseInt(a) - parseInt(b)).map(level => {
+                            const levelData = scoresByLevel[level];
+                            const activeSupplement = levelData.supplements && levelData.supplements.length > 0 
+                                ? levelData.supplements.filter(s => s && s.trim()).join(', ')
+                                : '';
+                            return `
                             <div class="study-score-entry">
                                 <strong>Level ${level}-Back</strong> - 
-                                Highest Score: ${scoresByLevel[level]}
+                                Highest Score: ${levelData.score}
+                                ${activeSupplement ? `
+                                    <br><span style="font-size: 0.9em; color: #2552a3; font-weight: normal;">
+                                        Enhancements used: ${activeSupplement}
+                                    </span>
+                                ` : '<br><span style="font-size: 0.9em; color: #666; font-weight: normal;">No enhancements recorded</span>'}
                             </div>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -706,12 +700,12 @@
             
             const width = rect.width;
             const height = rect.height;
-            const padding = 30;
+            const padding = 40;
             const chartWidth = width - padding * 2;
             const chartHeight = height - padding * 2;
             
-            // Prepare data - use more sessions for horizontal layout (last 30 sessions)
-            const recentSessions = sessions.slice(-30);
+            // Prepare data - use more sessions for wider layout (last 50 sessions)
+            const recentSessions = sessions.slice(-50);
             const scores = recentSessions.map(s => s.totalScore || 0);
             const maxScore = Math.max(...scores, 1);
             const minScore = Math.min(...scores, 0);

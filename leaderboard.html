@@ -179,10 +179,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 10%; text-align: center;">Rank</th>
-                            <th style="width: 35%;">Player</th>
-                            <th style="width: 20%; text-align: center;">Highest Level</th>
-                            <th style="width: 20%; text-align: center;">Best Score</th>
+                            <th style="width: 8%; text-align: center;">Rank</th>
+                            <th style="width: 25%;">Player</th>
+                            <th style="width: 15%; text-align: center;">Highest Level</th>
+                            <th style="width: 15%; text-align: center;">Best Score</th>
+                            <th style="width: 37%;">Enhancements Used</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
@@ -247,13 +248,17 @@
             const highestLevel = Math.max(...sessions.map(s => s.nBackLevel || 2));
             const lastPlayed = new Date().toISOString();
             
-            // Calculate best scores per level from sessions
+            // Calculate best scores per level from sessions with supplement info
             const bestScores = {};
+            const bestScoreSupplements = {};
             sessions.forEach(session => {
                 const level = session.nBackLevel || 2;
-                const totalScore = (session.positionCorrect || 0) + (session.letterCorrect || 0);
+                const totalScore = session.totalScore || (session.positionCorrect || 0) + (session.letterCorrect || 0);
                 if (!bestScores[level] || totalScore > bestScores[level]) {
                     bestScores[level] = totalScore;
+                    // Track supplements for this best score
+                    const supplements = session.currentSupplements || (session.currentSupplement ? [session.currentSupplement] : []);
+                    bestScoreSupplements[level] = supplements.filter(s => s && s.trim());
                 }
             });
             
@@ -273,10 +278,17 @@
                     leaderboard[existingIndex].bestScores = {};
                 }
                 
-                // Merge best scores
+                // Merge best scores and supplements
+                if (!leaderboard[existingIndex].bestScoreSupplements) {
+                    leaderboard[existingIndex].bestScoreSupplements = {};
+                }
+                
                 Object.keys(bestScores).forEach(level => {
                     const currentBest = leaderboard[existingIndex].bestScores[level] || 0;
-                    leaderboard[existingIndex].bestScores[level] = Math.max(currentBest, bestScores[level]);
+                    if (bestScores[level] > currentBest) {
+                        leaderboard[existingIndex].bestScores[level] = bestScores[level];
+                        leaderboard[existingIndex].bestScoreSupplements[level] = bestScoreSupplements[level] || [];
+                    }
                 });
             } else {
                 // Get user data for country and workplace
@@ -289,7 +301,8 @@
                     lastPlayed: lastPlayed,
                     joinedDate: new Date().toISOString(),
                     country: userData.country || 'OTHER',
-                    bestScores: bestScores
+                    bestScores: bestScores,
+                    bestScoreSupplements: bestScoreSupplements
                 });
             }
             
@@ -373,7 +386,7 @@
             if (filteredData.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="4" class="no-data">No players found for this filter. Be the first!</td>
+                        <td colspan="5" class="no-data">No players found for this filter. Be the first!</td>
                     </tr>
                 `;
                 return;
@@ -392,6 +405,11 @@
                     ? entry.bestScores[entry.highestLevel] 
                     : 'N/A';
                 
+                // Get supplements used for best score
+                const supplements = entry.bestScoreSupplements && entry.bestScoreSupplements[entry.highestLevel]
+                    ? entry.bestScoreSupplements[entry.highestLevel].join(', ')
+                    : '';
+                
                 return `
                     <tr class="${isCurrentUser ? 'user-highlight' : ''}">
                         <td style="text-align: center;">
@@ -406,6 +424,9 @@
                         </td>
                         <td style="text-align: center;">
                             <span class="level">${bestScore}</span>
+                        </td>
+                        <td style="font-size: 0.9em; color: #666;">
+                            ${supplements || 'No enhancements recorded'}
                         </td>
                     </tr>
                 `;
@@ -429,14 +450,14 @@
         // Add some demo data if leaderboard is empty (remove this in production)
         if (allLeaderboardData.length === 0) {
             const demoData = [
-                { username: "CognitiveMaster", highestLevel: 8, lastPlayed: new Date().toISOString(), country: "US", bestScores: { 8: 18, 7: 16, 6: 14 } },
-                { username: "BrainTrainer42", highestLevel: 7, lastPlayed: new Date().toISOString(), country: "GB", bestScores: { 7: 17, 6: 15, 5: 13 } },
-                { username: "MemoryChamp", highestLevel: 7, lastPlayed: new Date(Date.now() - 24*60*60*1000).toISOString(), country: "CA", bestScores: { 7: 15, 6: 14, 5: 12 } },
-                { username: "NeuralNinja", highestLevel: 6, lastPlayed: new Date().toISOString(), country: "JP", bestScores: { 6: 16, 5: 14, 4: 12 } },
-                { username: "FocusWarrior", highestLevel: 6, lastPlayed: new Date(Date.now() - 2*24*60*60*1000).toISOString(), country: "DE", bestScores: { 6: 14, 5: 13, 4: 11 } },
-                { username: "MindAthlete", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "AU", bestScores: { 5: 15, 4: 13, 3: 11 } },
-                { username: "ThinkFast", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "SE", bestScores: { 5: 13, 4: 12, 3: 10 } },
-                { username: "Synaptic", highestLevel: 4, lastPlayed: new Date(Date.now() - 3*24*60*60*1000).toISOString(), country: "FR", bestScores: { 4: 14, 3: 12, 2: 10 } }
+                { username: "CognitiveMaster", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "US", bestScores: { 5: 18, 4: 16, 3: 14 }, bestScoreSupplements: { 5: ["creatine", "lions-mane", "meditation"], 4: ["creatine", "choline"], 3: ["meditation"] } },
+                { username: "BrainTrainer42", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "GB", bestScores: { 5: 17, 4: 15, 3: 13 }, bestScoreSupplements: { 5: ["modafinil", "l-theanine-caffeine"], 4: ["l-theanine-caffeine"], 3: ["breathing-exercises"] } },
+                { username: "MemoryChamp", highestLevel: 5, lastPlayed: new Date(Date.now() - 24*60*60*1000).toISOString(), country: "CA", bestScores: { 5: 15, 4: 14, 3: 12 }, bestScoreSupplements: { 5: ["bacopa", "phosphatidylserine"], 4: ["bacopa"], 3: [] } },
+                { username: "NeuralNinja", highestLevel: 4, lastPlayed: new Date().toISOString(), country: "JP", bestScores: { 4: 16, 3: 14, 2: 12 }, bestScoreSupplements: { 4: ["huperzine-a", "meditation"], 3: ["meditation"], 2: [] } },
+                { username: "FocusWarrior", highestLevel: 4, lastPlayed: new Date(Date.now() - 2*24*60*60*1000).toISOString(), country: "DE", bestScores: { 4: 14, 3: 13, 2: 11 }, bestScoreSupplements: { 4: ["aniracetam"], 3: [], 2: [] } },
+                { username: "MindAthlete", highestLevel: 4, lastPlayed: new Date().toISOString(), country: "AU", bestScores: { 4: 15, 3: 13, 2: 11 }, bestScoreSupplements: { 4: ["creatine", "breathing-exercises"], 3: ["creatine"], 2: [] } },
+                { username: "ThinkFast", highestLevel: 3, lastPlayed: new Date().toISOString(), country: "SE", bestScores: { 3: 13, 2: 12, 1: 10 }, bestScoreSupplements: { 3: ["nicotine"], 2: [], 1: [] } },
+                { username: "Synaptic", highestLevel: 3, lastPlayed: new Date(Date.now() - 3*24*60*60*1000).toISOString(), country: "FR", bestScores: { 3: 14, 2: 12, 1: 10 }, bestScoreSupplements: { 3: ["pqq", "alcar"], 2: ["pqq"], 1: [] } }
             ];
             localStorage.setItem('leaderboard', JSON.stringify(demoData));
             loadLeaderboard();
