@@ -1582,47 +1582,23 @@ class DualNBackGame {
     }
     
     showBroStartPopup() {
-        // Array of different motivational messages with dad humor and military jargon
+        // Array of short motivational messages
         const messages = [
             {
-                title: 'COLONEL JOHNSON REPORTING! 🫡',
-                message: `Listen up RECRUIT! Today we're doing BRAIN CALISTHENICS!
-                
-                Why did the neuron break up with the synapse? Because it wasn't making the CONNECTION! HAH! 
-                
-                Your mission, should you choose to accept it: DOMINATE those squares like they owe you money! 
-                
-                Remember: In the ARMY OF THE MIND, you're either ADVANCING or you're DEAD WEIGHT! OORAH! 🧠⚔️`
+                title: 'READY FOR WAR! 🫡',
+                message: `Time to pump that BRAIN, soldier!\n\nDOMINATE those patterns! OORAH! 🧠💪`
             },
             {
-                title: 'SERGEANT STEEL\'S BRAIN BOOT CAMP! 💀',
-                message: `ATTENTION SOLDIER! Drop and give me... MENTAL PUSHUPS!
-                
-                What do you call a lazy brain cell? UNEMPLOYED! We don't do unemployed here, UNDERSTOOD?!
-                
-                Today's forecast: 100% chance of COGNITIVE GAINS with a side of HUMBLE PIE!
-                
-                Move it, move it, MOVE IT! Those patterns won't memorize themselves! HOORAH! 🔥💪`
+                title: 'BRAIN BOOT CAMP! 💀',
+                message: `What do you call a lazy brain cell? UNEMPLOYED!\n\nLet's fix that! MOVE IT! 🔥`
             },
             {
-                title: 'LIEUTENANT STEEL\'S WISDOM! 🧠⭐',
-                message: `Good morning BRAIN WARRIOR! Time for some MENTAL MAYHEM!
-                
-                Why don't brain cells ever get lost? Because they always know their POSITION! *chef's kiss* 
-                
-                Listen, your brain is like a fine muscle - it gets better under PRESSURE! And right now, we're putting you in the GRINDER, soldier!
-                
-                Lock and load those NEURONS! We're going in HOT! LET'S GO! 💪🎯`
+                title: 'OPERATION: FOCUS! 🎖️',
+                message: `Your mission: CRUSH these patterns!\n\nLock and load those NEURONS! 💪🎯`
             },
             {
-                title: 'MAJOR TANK\'S MISSION BRIEFING! 🎖️',
-                message: `SOLDIER! Welcome to OPERATION: BRAIN STORM!
-                
-                What's the difference between a good soldier and a great one? FOCUS! And possibly more PROTEIN!
-                
-                Your brain is now a FORTRESS! Defend it against confusion! Attack with PRECISION!
-                
-                Remember the three rules: CONCENTRATE, CONCENTRATE, and when in doubt... CONCENTRATE MORE! MOVE OUT! 🏰⚡`
+                title: 'MENTAL MAYHEM! ⚡',
+                message: `Why don't brain cells get lost?\nThey know their POSITION!\n\nLET'S GO! 🧠`
             }
         ];
         
@@ -1632,7 +1608,7 @@ class DualNBackGame {
         this.showMotivationalPopup(
             randomMessage.title,
             randomMessage.message,
-            'SIR YES SIR! 🫡',
+            'LET\'S GO! 🚀',
             () => this.actuallyStartGame()
         );
     }
@@ -1643,49 +1619,27 @@ class DualNBackGame {
         
         // Performance-based feedback
         if (perfectScore) {
-            title = 'OUTSTANDING SOLDIER! 🏆';
-            broMessage = `INCREDIBLE BRO! You just crushed it like a CHAMPION!
-            
-            Perfect score = perfect GAINS! Your brain is now SWOLE as hell! 
-            
-            You're not just training - you're DOMINATING! Keep this energy, warrior! 💪🔥`;
+            title = 'MISSION ACCOMPLISHED! 🏆';
+            broMessage = `PERFECT SCORE! You're a CHAMPION!\n\nYour brain is now SWOLE! 💪🔥`;
         } else if (totalCorrect / totalAvailableMatches >= 0.8) {
-            title = 'EXCELLENT WORK SOLDIER! 💪';
-            broMessage = `Outstanding performance! ${totalCorrect}/${totalAvailableMatches} - that's some SOLID training!
-            
-            Your mental muscles are getting STRONGER! I can see the dedication! 
-            
-            Keep pushing like this and you'll be a brain training BEAST! 🧠💪`;
+            title = 'EXCELLENT WORK! 💪';
+            broMessage = `${totalCorrect}/${totalAvailableMatches} - SOLID performance!\n\nYour mental muscles are getting STRONGER! 🧠`;
         } else if (totalCorrect / totalAvailableMatches >= 0.6) {
-            title = 'GOOD WORK BRO! 👍';
-            broMessage = `Good effort soldier! ${totalCorrect}/${totalAvailableMatches} - you're making progress!
-            
-            Remember: even Schwarzenegger started somewhere! Your brain needs time to BUILD! 
-            
-            Stay consistent, stay focused, and the GAINS will come! 💪`;
+            title = 'GOOD PROGRESS! 👍';
+            broMessage = `${totalCorrect}/${totalAvailableMatches} - You're improving!\n\nKeep grinding, soldier! 💪`;
         } else if (totalCorrect / totalAvailableMatches >= 0.4) {
-            title = 'SERGEANT STEEL IS NOT IMPRESSED! 😠';
-            broMessage = `${totalCorrect}/${totalAvailableMatches}?! COME ON! What is this, amateur hour?!
-            
-            DROP AND GIVE ME TWENTY BRAIN PUSHUPS! Your neurons are WEAKER than wet tissue paper! 
-            
-            I've seen NOODLES with more backbone than your performance! GET IT TOGETHER SOLDIER! 💪⚡`;
+            title = 'NEEDS IMPROVEMENT! 😠';
+            broMessage = `${totalCorrect}/${totalAvailableMatches}?! Come on!\n\nTime for more BRAIN PUSHUPS! 💪⚡`;
         } else {
-            title = 'TOTAL MISSION FAILURE! 🚨';
-            broMessage = `${totalCorrect}/${totalAvailableMatches}?! WHAT THE HECK IS THIS?!
-            
-            Listen up RECRUIT! I've trained MONKEYS that could do better blindfolded! Your brain is more scrambled than Sunday eggs!
-            
-            You call this training?! My GRANDMA could beat this score! Time for INTENSIVE BOOT CAMP!
-            
-            No TV, no snacks, no NOTHING until you show me some REAL mental muscle! DO YOU COPY?! 🔥💀⚡`;
+            title = 'MISSION FAILED! 🚨';
+            broMessage = `${totalCorrect}/${totalAvailableMatches}?! OUCH!\n\nEven my GRANDMA could beat that!\nTime for BOOT CAMP! 🔥`;
         }
         
         this.showMotivationalPopup(title, broMessage, 'TRAIN AGAIN!', () => this.resetGame());
     }
     
     showMotivationalPopup(title, message, buttonText, callback) {
-        // Create popup with Italian flag gradient background
+        // Create clean, minimal popup
         const popup = document.createElement('div');
         popup.style.cssText = `
             position: fixed;
@@ -1693,50 +1647,41 @@ class DualNBackGame {
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 10000;
-            animation: fadeIn 0.3s ease-in;
+            animation: fadeIn 0.2s ease-in;
         `;
         
         const popupContent = document.createElement('div');
         popupContent.style.cssText = `
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
-            border: 4px solid #f39c12;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 320px;
+            width: 90%;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            animation: slideIn 0.5s ease-out;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
         `;
         
-        const contentInner = document.createElement('div');
-        contentInner.style.cssText = `
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 25px;
-            border-radius: 10px;
-            border: 2px solid #333;
-        `;
-        
-        const titleEl = document.createElement('h2');
+        const titleEl = document.createElement('h3');
         titleEl.textContent = title;
         titleEl.style.cssText = `
-            margin: 0 0 20px 0;
-            color: #d32f2f;
-            font-size: 1.8em;
+            margin: 0 0 12px 0;
+            color: #2c3e50;
+            font-size: 1.3em;
             font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
         `;
         
         const messageEl = document.createElement('p');
         messageEl.style.cssText = `
-            margin: 0 0 25px 0;
-            color: #333;
-            font-size: 1.1em;
-            line-height: 1.5;
+            margin: 0 0 20px 0;
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.4;
             white-space: pre-line;
         `;
         messageEl.textContent = message;
@@ -1744,26 +1689,25 @@ class DualNBackGame {
         const button = document.createElement('button');
         button.textContent = buttonText;
         button.style.cssText = `
-            background: linear-gradient(45deg, #d32f2f, #f44336);
+            background: #3498db;
             color: white;
-            padding: 12px 30px;
+            padding: 10px 24px;
             border: none;
-            border-radius: 25px;
-            font-size: 1.2em;
-            font-weight: bold;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         `;
         
         button.onmouseover = () => {
-            button.style.transform = 'translateY(-2px)';
-            button.style.boxShadow = '0 6px 20px rgba(211, 47, 47, 0.6)';
+            button.style.background = '#2980b9';
+            button.style.transform = 'translateY(-1px)';
         };
         
         button.onmouseout = () => {
+            button.style.background = '#3498db';
             button.style.transform = 'translateY(0)';
-            button.style.boxShadow = '0 4px 15px rgba(211, 47, 47, 0.4)';
         };
         
         button.onclick = () => {
@@ -1779,16 +1723,15 @@ class DualNBackGame {
                 to { opacity: 1; }
             }
             @keyframes slideIn {
-                from { transform: scale(0.8) translateY(-50px); opacity: 0; }
+                from { transform: scale(0.9) translateY(-20px); opacity: 0; }
                 to { transform: scale(1) translateY(0); opacity: 1; }
             }
         `;
         document.head.appendChild(style);
         
-        contentInner.appendChild(titleEl);
-        contentInner.appendChild(messageEl);
-        contentInner.appendChild(button);
-        popupContent.appendChild(contentInner);
+        popupContent.appendChild(titleEl);
+        popupContent.appendChild(messageEl);
+        popupContent.appendChild(button);
         popup.appendChild(popupContent);
         document.body.appendChild(popup);
         
@@ -1797,7 +1740,7 @@ class DualNBackGame {
             if (document.head.contains(style)) {
                 document.head.removeChild(style);
             }
-        }, 1000);
+        }, 500);
     }
     
     generateRegularSequence(totalRounds, positionMatches, letterMatches, colorMatches) {
