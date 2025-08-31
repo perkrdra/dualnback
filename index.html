@@ -107,12 +107,12 @@
         </a>
         <div class="nav-container">
             <a href="study-enrollment.html" class="study-link desktop-nav">Join Study</a>
-            <button id="mute-btn" class="mute-btn">🔇</button>
             <button class="hamburger-menu" id="hamburger-menu">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
             </button>
+            <button id="mute-btn" class="mute-btn">🔇</button>
         </div>
         <div class="mobile-menu" id="mobile-menu">
             <a href="study-enrollment.html" class="mobile-study-link">Join Study</a>
@@ -164,9 +164,12 @@
                 <div id="mode-selector">
                     <label>Mode:</label>
                     <select id="game-mode">
-                        <option value="dual">Dual (Position + Letter)</option>
+                        <option value="dual">Dual (Regular)</option>
+                        <option value="dual-easy">Dual (Easy)</option>
                         <option value="position">Position Only</option>
                         <option value="letter">Letter Only</option>
+                        <option value="visual">Visual Only (Position + Color)</option>
+                        <option value="bro">Bro Mode</option>
                     </select>
                 </div>
             </div>
@@ -174,9 +177,9 @@
         
         <div class="instructions">
             <h3>How to Play:</h3>
-            <p>Watch the grid for position and letters.</p>
-            <p>Press <kbd>A</kbd> if the current position matches the position from N steps back.</p>
-            <p>Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.</p>
+            <p id="instructions-text">Watch the grid for position and letters.</p>
+            <p id="position-instruction">Press <kbd>A</kbd> if the current position matches the position from N steps back.</p>
+            <p id="second-modality-instruction">Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.</p>
             <p>You can respond to either one or both modalities - no penalty for not responding.</p>
             <p>Response time varies based on the speed setting you choose (adjustable from slow to fast).</p>
         </div>
@@ -469,6 +472,61 @@
                 clearTimeout(scrollTimeout);
             }
             scrollTimeout = setTimeout(handleScroll, 10);
+        });
+        
+        // Update instructions based on game mode
+        function updateInstructions() {
+            const gameMode = document.getElementById('game-mode').value;
+            const instructionsText = document.getElementById('instructions-text');
+            const positionInstruction = document.getElementById('position-instruction');
+            const secondModalityInstruction = document.getElementById('second-modality-instruction');
+            
+            switch (gameMode) {
+                case 'dual':
+                    instructionsText.textContent = 'Watch the grid for position and letters.';
+                    positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                    secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.';
+                    break;
+                case 'dual-easy':
+                    instructionsText.textContent = 'Watch the grid for position and letters (easier version).';
+                    positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                    secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.';
+                    break;
+                case 'bro':
+                    instructionsText.textContent = 'Yo bro! Train your brain like you train your muscles! 💪';
+                    positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                    secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.';
+                    break;
+                case 'position':
+                    instructionsText.textContent = 'Watch the grid for position only.';
+                    positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                    secondModalityInstruction.style.display = 'none';
+                    break;
+                case 'letter':
+                    instructionsText.textContent = 'Listen for letters (position follows clockwise pattern).';
+                    positionInstruction.style.display = 'none';
+                    secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.';
+                    break;
+                case 'visual':
+                    instructionsText.textContent = 'Watch the grid for position and colors.';
+                    positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                    secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current color matches the color from N steps back.';
+                    break;
+            }
+            
+            // Reset display for all instructions
+            if (gameMode !== 'position') {
+                positionInstruction.style.display = 'block';
+            }
+            if (gameMode !== 'letter') {
+                secondModalityInstruction.style.display = 'block';
+            }
+        }
+        
+        // Initialize instructions and listen for mode changes
+        document.addEventListener('DOMContentLoaded', function() {
+            updateInstructions();
+            document.getElementById('game-mode').addEventListener('change', updateInstructions);
         });
     </script>
 </body>

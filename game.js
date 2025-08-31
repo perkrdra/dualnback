@@ -7,6 +7,7 @@ class DualNBackGame {
         this.currentRound = 0;
         this.interval = null;
         this.letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        this.colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan'];
         this.isPlaying = false;
         this.canRespond = false;
         this.positionMatched = false;
@@ -19,10 +20,13 @@ class DualNBackGame {
         this.currentTrial = 0;
         this.positionCorrect = 0;
         this.letterCorrect = 0;
+        this.colorCorrect = 0;
         this.positionTotal = 0;
         this.letterTotal = 0;
+        this.colorTotal = 0;
         this.actualPositionMatches = 0;
         this.actualLetterMatches = 0;
+        this.actualColorMatches = 0;
         
         // Clockwise pattern for letter mode (3x3 grid)
         // 0 → 1 → 2
@@ -69,6 +73,8 @@ class DualNBackGame {
         this.updateScoreDisplays();
         this.updateMuteButton();
         this.updateButtonsForMode();
+        this.updateButtonLabels();
+        this.updateInstructions();
         
         // Session tracking
         this.sessionStartTime = null;
@@ -107,6 +113,16 @@ class DualNBackGame {
         // Initialize audio context on user interaction (required for iOS)
         this.initAudioContext();
         
+        // Show bro mode motivational popup before starting
+        if (this.gameMode === 'bro') {
+            this.showBroStartPopup();
+            return;
+        }
+        
+        this.actuallyStartGame();
+    }
+    
+    actuallyStartGame() {
         // Reset session data when starting a new game
         this.resetSession();
         
@@ -121,6 +137,7 @@ class DualNBackGame {
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
         this.updateButtonsForMode();
+        this.updateButtonLabels();
         this.gameModeSelect.disabled = true;
         this.speedSlider.disabled = true;
     }
@@ -179,43 +196,72 @@ class DualNBackGame {
         const totalRounds = this.trialsPerSession + this.nBack; // Need extra rounds for n-back
         const targetMatches = Math.floor(this.trialsPerSession * 2 / 3); // Scale matches with trials (2/3)
         
-        let positionMatches, letterMatches;
+        let positionMatches, letterMatches, colorMatches;
         switch (this.gameMode) {
             case 'dual':
                 positionMatches = Math.ceil(targetMatches / 2);
                 letterMatches = Math.floor(targetMatches / 2);
+                colorMatches = 0;
+                break;
+            case 'dual-easy':
+                positionMatches = Math.ceil(targetMatches / 2);
+                letterMatches = Math.floor(targetMatches / 2);
+                colorMatches = 0;
+                break;
+            case 'bro':
+                positionMatches = Math.ceil(targetMatches / 2);
+                letterMatches = Math.floor(targetMatches / 2);
+                colorMatches = 0;
                 break;
             case 'position':
                 positionMatches = targetMatches;
                 letterMatches = 0;
+                colorMatches = 0;
                 break;
             case 'letter':
                 positionMatches = 0;
                 letterMatches = targetMatches;
+                colorMatches = 0;
+                break;
+            case 'visual':
+                positionMatches = Math.ceil(targetMatches / 2);
+                letterMatches = 0;
+                colorMatches = Math.floor(targetMatches / 2);
                 break;
         }
         
-        // First, generate sequence
-        for (let i = 0; i < totalRounds; i++) {
-            let position;
-            
-            if (this.gameMode === 'letter') {
-                // In letter mode, use clockwise pattern
-                position = this.clockwisePattern[i % this.clockwisePattern.length];
-            } else {
-                // In other modes, use random positions
-                position = Math.floor(Math.random() * (this.gridSize * this.gridSize));
+        // Generate sequence based on mode
+        if (this.gameMode === 'dual-easy') {
+            // For dual-easy mode, generate sequences without lures
+            this.generateEasySequence(totalRounds, positionMatches, letterMatches);
+        } else if (this.gameMode === 'bro') {
+            // Bro mode uses regular dual generation but with motivational feedback
+            this.generateRegularSequence(totalRounds, positionMatches, letterMatches, colorMatches);
+        } else {
+            // For other modes, use standard generation
+            for (let i = 0; i < totalRounds; i++) {
+                let position;
+                
+                if (this.gameMode === 'letter') {
+                    // In letter mode, use clockwise pattern
+                    position = this.clockwisePattern[i % this.clockwisePattern.length];
+                } else {
+                    // In other modes, use random positions
+                    position = Math.floor(Math.random() * (this.gridSize * this.gridSize));
+                }
+                
+                this.sequence.push({
+                    position: position,
+                    letter: this.letters[Math.floor(Math.random() * this.letters.length)],
+                    color: this.colors[Math.floor(Math.random() * this.colors.length)]
+                });
             }
-            
-            this.sequence.push({
-                position: position,
-                letter: this.letters[Math.floor(Math.random() * this.letters.length)]
-            });
         }
         
         // Track which rounds have intentional matches
         const positionMatchRounds = new Set();
         const letterMatchRounds = new Set();
+        const colorMatchRounds = new Set();
         
         // Randomly select rounds where we'll force matches (after n-back threshold)
         const matchableRounds = [];
@@ -265,6 +311,17 @@ class DualNBackGame {
             }
         }
         
+        // Force color matches (for visual mode, on different rounds to avoid overlap)
+        let colorCount = 0;
+        for (let i = 0; i < matchableRounds.length && colorCount < colorMatches; i++) {
+            const round = matchableRounds[i];
+            if (!positionMatchRounds.has(round) && !letterMatchRounds.has(round)) { // Skip rounds that already have matches
+                this.sequence[round].color = this.sequence[round - this.nBack].color;
+                colorMatchRounds.add(round);
+                colorCount++;
+            }
+        }
+        
         // Remove any accidental matches by changing them
         for (let i = this.nBack; i < totalRounds; i++) {
             const current = this.sequence[i];
@@ -286,13 +343,21 @@ class DualNBackGame {
                 const currentLetterIndex = this.letters.indexOf(current.letter);
                 current.letter = this.letters[(currentLetterIndex + 1) % this.letters.length];
             }
+            
+            // If this round should NOT have a color match but does
+            if (!colorMatchRounds.has(i) && current.color === nBackAgo.color) {
+                // Change color to avoid match
+                const currentColorIndex = this.colors.indexOf(current.color);
+                current.color = this.colors[(currentColorIndex + 1) % this.colors.length];
+            }
         }
         
         // Store the actual match counts for validation
         this.actualPositionMatches = positionMatchRounds.size;
         this.actualLetterMatches = letterMatchRounds.size;
+        this.actualColorMatches = colorMatchRounds.size;
         
-        console.log(`Generated sequence with exactly ${this.actualPositionMatches} position and ${this.actualLetterMatches} letter matches for ${this.trialsPerSession} trials`);
+        console.log(`Generated sequence with exactly ${this.actualPositionMatches} position, ${this.actualLetterMatches} letter, and ${this.actualColorMatches} color matches for ${this.trialsPerSession} trials`);
     }
 
     nextRound() {
@@ -313,8 +378,12 @@ class DualNBackGame {
         this.clearGrid();
         this.activateCell(current.position);
         
-        // Only play sound and show letter if not in position-only mode
-        if (this.gameMode !== 'position') {
+        // Handle display based on mode
+        if (this.gameMode === 'visual') {
+            // In visual mode, show color instead of letter
+            this.showColor(current.position, current.color);
+        } else if (this.gameMode !== 'position') {
+            // Only play sound and show letter if not in position-only or visual mode
             this.playSound(current.letter);
             this.showLetter(current.letter);
         }
@@ -334,9 +403,11 @@ class DualNBackGame {
             
             const positionMatch = current.position === nBackAgo.position;
             const letterMatch = current.letter === nBackAgo.letter;
+            const colorMatch = current.color === nBackAgo.color;
             
             console.log(`Round ${this.currentRound}: Comparing position ${currentIndex} (${current.position}) with ${nBackIndex} (${nBackAgo.position}) = ${positionMatch}`);
             console.log(`Round ${this.currentRound}: Comparing letter ${currentIndex} (${current.letter}) with ${nBackIndex} (${nBackAgo.letter}) = ${letterMatch}`);
+            console.log(`Round ${this.currentRound}: Comparing color ${currentIndex} (${current.color}) with ${nBackIndex} (${nBackAgo.color}) = ${colorMatch}`);
             
             setTimeout(() => this.checkMatches(), this.responseTime);
         }
@@ -353,8 +424,17 @@ class DualNBackGame {
 
     clearGrid() {
         Array.from(this.gridContainer.children).forEach(cell => {
-            cell.classList.remove('active');
+            cell.classList.remove('active', 'visual-mode');
             cell.textContent = '';
+            // Only reset custom colors for visual mode, let CSS handle regular mode colors
+            if (this.gameMode === 'visual') {
+                cell.style.backgroundColor = '#ffb703'; // Reset to default color
+                cell.style.border = 'none'; // Reset border
+            } else {
+                // For non-visual modes, remove any custom styling and let CSS classes handle colors
+                cell.style.backgroundColor = '';
+                cell.style.border = '';
+            }
         });
     }
 
@@ -642,14 +722,18 @@ class DualNBackGame {
             return;
         }
 
-        if (e.key === 'a' && !this.positionMatched && this.gameMode !== 'letter') {
+        if (e.key === 'a' && !this.positionMatched && (this.gameMode === 'dual' || this.gameMode === 'dual-easy' || this.gameMode === 'bro' || this.gameMode === 'position' || this.gameMode === 'visual')) {
             console.log('A pressed - checking position match');
             this.positionMatched = true;
             this.checkPositionMatch();
-        } else if (e.key === 'z' && !this.soundMatched && this.gameMode !== 'position') {
+        } else if (e.key === 'z' && !this.soundMatched && (this.gameMode === 'dual' || this.gameMode === 'dual-easy' || this.gameMode === 'bro' || this.gameMode === 'letter')) {
             console.log('Z pressed - checking letter match');
             this.soundMatched = true;
             this.checkLetterMatch();
+        } else if (e.key === 'z' && !this.soundMatched && this.gameMode === 'visual') {
+            console.log('Z pressed - checking color match in visual mode');
+            this.soundMatched = true;
+            this.checkColorMatch();
         }
     }
 
@@ -670,17 +754,29 @@ class DualNBackGame {
 
     handleLetterClick() {
         if (!this.isPlaying || !this.canRespond || this.soundMatched) {
-            console.log(`Letter button ignored: playing=${this.isPlaying}, canRespond=${this.canRespond}, already matched=${this.soundMatched}`);
+            console.log(`Letter/Color button ignored: playing=${this.isPlaying}, canRespond=${this.canRespond}, already matched=${this.soundMatched}`);
             return;
         }
-        console.log('Letter button clicked - checking letter match');
-        this.soundMatched = true;
         
-        // Record that user clicked letter for current trial
-        const currentIndex = this.currentRound - 1;
-        this.sequence[currentIndex].userClickedLetter = true;
-        
-        this.checkLetterMatch();
+        if (this.gameMode === 'visual') {
+            console.log('Color button clicked - checking color match');
+            this.soundMatched = true;
+            
+            // Record that user clicked color for current trial
+            const currentIndex = this.currentRound - 1;
+            this.sequence[currentIndex].userClickedColor = true;
+            
+            this.checkColorMatch();
+        } else {
+            console.log('Letter button clicked - checking letter match');
+            this.soundMatched = true;
+            
+            // Record that user clicked letter for current trial
+            const currentIndex = this.currentRound - 1;
+            this.sequence[currentIndex].userClickedLetter = true;
+            
+            this.checkLetterMatch();
+        }
     }
 
     handleModeChange() {
@@ -690,6 +786,8 @@ class DualNBackGame {
         this.resetSession();
         this.updateButtonsForMode();
         this.updateScoreDisplays();
+        this.updateButtonLabels();
+        this.updateInstructions();
         console.log(`Game mode changed to: ${this.gameMode}`);
     }
 
@@ -777,7 +875,7 @@ class DualNBackGame {
         let trialCorrect = true;
         
         // Check position accuracy based on game mode
-        if (this.gameMode === 'dual' || this.gameMode === 'position') {
+        if (this.gameMode === 'dual' || this.gameMode === 'dual-easy' || this.gameMode === 'bro' || this.gameMode === 'position') {
             const userClickedPosition = this.sequence[currentIndex].userClickedPosition || false;
             if (hasPositionMatch !== userClickedPosition) {
                 trialCorrect = false;
@@ -785,9 +883,18 @@ class DualNBackGame {
         }
         
         // Check letter accuracy based on game mode  
-        if (this.gameMode === 'dual' || this.gameMode === 'letter') {
+        if (this.gameMode === 'dual' || this.gameMode === 'dual-easy' || this.gameMode === 'bro' || this.gameMode === 'letter') {
             const userClickedLetter = this.sequence[currentIndex].userClickedLetter || false;
             if (hasLetterMatch !== userClickedLetter) {
+                trialCorrect = false;
+            }
+        }
+        
+        // Check color accuracy for visual mode
+        if (this.gameMode === 'visual') {
+            const hasColorMatch = current.color === nBackAgo.color;
+            const userClickedColor = this.sequence[currentIndex].userClickedColor || false;
+            if (hasColorMatch !== userClickedColor) {
                 trialCorrect = false;
             }
         }
@@ -818,6 +925,8 @@ class DualNBackGame {
         
         switch (this.gameMode) {
             case 'dual':
+            case 'dual-easy':
+            case 'bro':
                 this.positionBtn.disabled = false;
                 this.letterBtn.disabled = false;
                 this.positionBtn.style.display = 'block';
@@ -835,17 +944,94 @@ class DualNBackGame {
                 this.positionBtn.style.display = 'none';
                 this.letterBtn.style.display = 'block';
                 break;
+            case 'visual':
+                this.positionBtn.disabled = false;
+                this.letterBtn.disabled = false;
+                this.positionBtn.style.display = 'block';
+                this.letterBtn.style.display = 'block';
+                break;
+        }
+    }
+    
+    updateButtonLabels() {
+        // Update button text based on game mode
+        if (this.gameMode === 'visual') {
+            this.positionBtn.textContent = 'Position';
+            this.letterBtn.textContent = 'Color';
+        } else {
+            this.positionBtn.textContent = 'Position';
+            this.letterBtn.textContent = 'Letter';
+        }
+    }
+    
+    updateInstructions() {
+        const instructionsText = document.getElementById('instructions-text');
+        const positionInstruction = document.getElementById('position-instruction');
+        const secondModalityInstruction = document.getElementById('second-modality-instruction');
+        
+        if (!instructionsText) return; // Instructions may not be present on all pages
+        
+        switch (this.gameMode) {
+            case 'dual':
+                instructionsText.textContent = 'Watch the grid for position and letters.';
+                positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.';
+                break;
+            case 'dual-easy':
+                instructionsText.textContent = 'Watch the grid for position and letters (easier version).';
+                positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.';
+                break;
+            case 'bro':
+                instructionsText.textContent = 'Yo soldier! Train your brain like you train your muscles! 💪';
+                positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.';
+                break;
+            case 'position':
+                instructionsText.textContent = 'Watch the grid for position only.';
+                positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                secondModalityInstruction.style.display = 'none';
+                break;
+            case 'letter':
+                instructionsText.textContent = 'Listen for letters (position follows clockwise pattern).';
+                positionInstruction.style.display = 'none';
+                secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current letter matches the letter from N steps back.';
+                break;
+            case 'visual':
+                instructionsText.textContent = 'Watch the grid for position and colors.';
+                positionInstruction.innerHTML = 'Press <kbd>A</kbd> if the current position matches the position from N steps back.';
+                secondModalityInstruction.innerHTML = 'Press <kbd>Z</kbd> if the current color matches the color from N steps back.';
+                break;
+        }
+        
+        // Reset display for all instructions
+        if (this.gameMode !== 'position') {
+            positionInstruction.style.display = 'block';
+        }
+        if (this.gameMode !== 'letter') {
+            secondModalityInstruction.style.display = 'block';
         }
     }
 
     updateScore() {
-        // Score is the total number of matches found (position + letter)
-        this.score = this.positionCorrect + this.letterCorrect;
+        // Score is the total number of matches found based on game mode
+        if (this.gameMode === 'visual') {
+            this.score = this.positionCorrect + this.colorCorrect;
+        } else {
+            this.score = this.positionCorrect + this.letterCorrect;
+        }
         
         // Calculate total possible matches based on sequence generation
         const availablePositionMatches = this.actualPositionMatches || 0;
         const availableLetterMatches = this.actualLetterMatches || 0;
-        const totalPossibleMatches = availablePositionMatches + availableLetterMatches;
+        const availableColorMatches = this.actualColorMatches || 0;
+        
+        let totalPossibleMatches;
+        if (this.gameMode === 'visual') {
+            totalPossibleMatches = availablePositionMatches + availableColorMatches;
+        } else {
+            totalPossibleMatches = availablePositionMatches + availableLetterMatches;
+        }
         
         this.scoreValue.textContent = `${this.score}/${totalPossibleMatches}`;
     }
@@ -854,6 +1040,16 @@ class DualNBackGame {
         const activeCell = document.querySelector('.grid-cell.active');
         if (activeCell) {
             activeCell.textContent = letter;
+            // In non-visual modes, the active cell should maintain its active styling
+            // The CSS .grid-cell.active class will handle the background color
+        }
+    }
+    
+    showColor(position, color) {
+        const cell = this.gridContainer.children[position];
+        if (cell) {
+            cell.style.backgroundColor = color;
+            cell.style.border = '3px solid white';
         }
     }
 
@@ -898,6 +1094,29 @@ class DualNBackGame {
         } else {
             this.showFeedback(false, 'letter');
             console.log(`Letter WRONG! Total matches: ${this.positionCorrect + this.letterCorrect}`);
+        }
+        this.updateScore();
+        this.updateScoreDisplays();
+    }
+    
+    checkColorMatch() {
+        if (this.currentRound <= this.nBack) return;
+        
+        const currentIndex = this.currentRound - 1;
+        const nBackIndex = currentIndex - this.nBack;
+        const current = this.sequence[currentIndex];
+        const nBackAgo = this.sequence[nBackIndex];
+        
+        const isCorrect = current.color === nBackAgo.color;
+        this.colorTotal++;
+        
+        if (isCorrect) {
+            this.colorCorrect++;
+            this.showFeedback(true, 'color');
+            console.log(`Color CORRECT! Total matches: ${this.positionCorrect + this.colorCorrect}`);
+        } else {
+            this.showFeedback(false, 'color');
+            console.log(`Color WRONG! Total matches: ${this.positionCorrect + this.colorCorrect}`);
         }
         this.updateScore();
         this.updateScoreDisplays();
@@ -1037,6 +1256,8 @@ class DualNBackGame {
         // Show/hide scores based on mode
         switch (this.gameMode) {
             case 'dual':
+            case 'dual-easy':
+            case 'bro':
                 positionScoreDiv.style.display = 'block';
                 letterScoreDiv.style.display = 'block';
                 break;
@@ -1047,6 +1268,19 @@ class DualNBackGame {
             case 'letter':
                 positionScoreDiv.style.display = 'none';
                 letterScoreDiv.style.display = 'block';
+                break;
+            case 'visual':
+                positionScoreDiv.style.display = 'block';
+                letterScoreDiv.style.display = 'block';
+                // Update the letter score div to show color score in visual mode
+                if (this.letterScoreValue) {
+                    this.letterScoreValue.textContent = `${this.colorCorrect}/${this.actualColorMatches || 0}`;
+                }
+                // Update the label text for the score display
+                const letterScoreElement = document.getElementById('letter-score');
+                if (letterScoreElement) {
+                    letterScoreElement.innerHTML = `Color: <span id="letter-score-value">${this.colorCorrect}/${this.actualColorMatches || 0}</span>`;
+                }
                 break;
         }
     }
@@ -1064,13 +1298,26 @@ class DualNBackGame {
         // Use the actual match counts from sequence generation
         const availablePositionMatches = this.actualPositionMatches || Math.ceil(Math.floor(this.trialsPerSession * 2 / 3) / 2);
         const availableLetterMatches = this.actualLetterMatches || Math.floor(Math.floor(this.trialsPerSession * 2 / 3) / 2);
-        const totalAvailableMatches = availablePositionMatches + availableLetterMatches;
+        const availableColorMatches = this.actualColorMatches || Math.floor(Math.floor(this.trialsPerSession * 2 / 3) / 2);
         
-        const totalCorrect = this.positionCorrect + this.letterCorrect;
+        let totalAvailableMatches, totalCorrect;
+        if (this.gameMode === 'visual') {
+            totalAvailableMatches = availablePositionMatches + availableColorMatches;
+            totalCorrect = this.positionCorrect + this.colorCorrect;
+        } else {
+            totalAvailableMatches = availablePositionMatches + availableLetterMatches;
+            totalCorrect = this.positionCorrect + this.letterCorrect;
+        }
         
         let message = `Session Complete!\n\n`;
         message += `Position matches found: ${this.positionCorrect} (out of ${availablePositionMatches} available)\n`;
-        message += `Letter matches found: ${this.letterCorrect} (out of ${availableLetterMatches} available)\n`;
+        
+        if (this.gameMode === 'visual') {
+            message += `Color matches found: ${this.colorCorrect} (out of ${availableColorMatches} available)\n`;
+        } else {
+            message += `Letter matches found: ${this.letterCorrect} (out of ${availableLetterMatches} available)\n`;
+        }
+        
         message += `Total Score: ${totalCorrect}/${totalAvailableMatches}\n\n`;
         
         const perfectScore = totalCorrect === totalAvailableMatches && 
@@ -1099,7 +1346,11 @@ class DualNBackGame {
             message += `Take your time and focus on the patterns.`;
         }
         
-        this.showSessionComplete(message, totalCorrect);
+        if (this.gameMode === 'bro') {
+            this.showBroEndPopup(message, totalCorrect, totalAvailableMatches, perfectScore);
+        } else {
+            this.showSessionComplete(message, totalCorrect);
+        }
         // Don't reset session immediately - let user see the scores
         // Reset will happen when they start a new game
     }
@@ -1148,7 +1399,7 @@ class DualNBackGame {
             letterTotal: this.letterTotal,
             actualPositionMatches: this.actualPositionMatches,
             actualLetterMatches: this.actualLetterMatches,
-            totalScore: this.positionCorrect + this.letterCorrect,
+            totalScore: this.gameMode === 'visual' ? this.positionCorrect + this.colorCorrect : this.positionCorrect + this.letterCorrect,
             positionAccuracy: this.positionTotal > 0 ? (this.positionCorrect / this.positionTotal * 100).toFixed(1) : 0,
             letterAccuracy: this.letterTotal > 0 ? (this.letterCorrect / this.letterTotal * 100).toFixed(1) : 0,
             overallAccuracy: (this.positionTotal + this.letterTotal) > 0 ? 
@@ -1243,6 +1494,349 @@ class DualNBackGame {
         
         // Save updated leaderboard
         localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    }
+    
+    generateEasySequence(totalRounds, positionMatches, letterMatches) {
+        // For dual-easy mode, create sequences that vary on a continuum with no lures
+        // This eliminates interference by ensuring clear separation between match/non-match stimuli
+        
+        this.sequence = [];
+        
+        // Create arrays to track used positions and letters to avoid lures
+        const usedPositions = new Array(totalRounds).fill(-1);
+        const usedLetters = new Array(totalRounds).fill('');
+        
+        // First pass: generate base sequence with good separation
+        for (let i = 0; i < totalRounds; i++) {
+            let position, letter;
+            
+            // For positions, ensure no repeats within n+1 steps to avoid lures
+            do {
+                position = Math.floor(Math.random() * (this.gridSize * this.gridSize));
+            } while (this.hasRecentValue(usedPositions, i, position, this.nBack + 1));
+            
+            // For letters, ensure no repeats within n+1 steps to avoid lures
+            do {
+                letter = this.letters[Math.floor(Math.random() * this.letters.length)];
+            } while (this.hasRecentValue(usedLetters, i, letter, this.nBack + 1));
+            
+            usedPositions[i] = position;
+            usedLetters[i] = letter;
+            
+            this.sequence.push({
+                position: position,
+                letter: letter,
+                color: this.colors[Math.floor(Math.random() * this.colors.length)]
+            });
+        }
+        
+        // Second pass: strategically place exact matches
+        const matchableRounds = [];
+        for (let i = this.nBack; i < totalRounds; i++) {
+            matchableRounds.push(i);
+        }
+        
+        // Shuffle match positions
+        for (let i = matchableRounds.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [matchableRounds[i], matchableRounds[j]] = [matchableRounds[j], matchableRounds[i]];
+        }
+        
+        // Place position matches
+        const positionMatchRounds = new Set();
+        for (let i = 0; i < Math.min(positionMatches, matchableRounds.length); i++) {
+            const round = matchableRounds[i];
+            this.sequence[round].position = this.sequence[round - this.nBack].position;
+            positionMatchRounds.add(round);
+        }
+        
+        // Place letter matches on different rounds
+        const letterMatchRounds = new Set();
+        let letterCount = 0;
+        for (let i = 0; i < matchableRounds.length && letterCount < letterMatches; i++) {
+            const round = matchableRounds[i];
+            if (!positionMatchRounds.has(round)) {
+                this.sequence[round].letter = this.sequence[round - this.nBack].letter;
+                letterMatchRounds.add(round);
+                letterCount++;
+            }
+        }
+        
+        // Store actual match counts
+        this.actualPositionMatches = positionMatchRounds.size;
+        this.actualLetterMatches = letterMatchRounds.size;
+        this.actualColorMatches = 0;
+        
+        console.log(`Generated EASY sequence with exactly ${this.actualPositionMatches} position and ${this.actualLetterMatches} letter matches for ${this.trialsPerSession} trials (no lures)`);
+    }
+    
+    hasRecentValue(array, currentIndex, value, lookbackRange) {
+        // Check if value appears in the recent history to avoid lures
+        const startIndex = Math.max(0, currentIndex - lookbackRange + 1);
+        for (let i = startIndex; i < currentIndex; i++) {
+            if (array[i] === value) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    showBroStartPopup() {
+        // Array of different motivational messages with dad humor and military jargon
+        const messages = [
+            {
+                title: 'COLONEL JOHNSON REPORTING! 🫡',
+                message: `Listen up RECRUIT! Today we're doing BRAIN CALISTHENICS!
+                
+                Why did the neuron break up with the synapse? Because it wasn't making the CONNECTION! HAH! 
+                
+                Your mission, should you choose to accept it: DOMINATE those squares like they owe you money! 
+                
+                Remember: In the ARMY OF THE MIND, you're either ADVANCING or you're DEAD WEIGHT! OORAH! 🧠⚔️`
+            },
+            {
+                title: 'SERGEANT STEEL\'S BRAIN BOOT CAMP! 💀',
+                message: `ATTENTION SOLDIER! Drop and give me... MENTAL PUSHUPS!
+                
+                What do you call a lazy brain cell? UNEMPLOYED! We don't do unemployed here, UNDERSTOOD?!
+                
+                Today's forecast: 100% chance of COGNITIVE GAINS with a side of HUMBLE PIE!
+                
+                Move it, move it, MOVE IT! Those patterns won't memorize themselves! HOORAH! 🔥💪`
+            },
+            {
+                title: 'LIEUTENANT STEEL\'S WISDOM! 🧠⭐',
+                message: `Good morning BRAIN WARRIOR! Time for some MENTAL MAYHEM!
+                
+                Why don't brain cells ever get lost? Because they always know their POSITION! *chef's kiss* 
+                
+                Listen, your brain is like a fine muscle - it gets better under PRESSURE! And right now, we're putting you in the GRINDER, soldier!
+                
+                Lock and load those NEURONS! We're going in HOT! LET'S GO! 💪🎯`
+            },
+            {
+                title: 'MAJOR TANK\'S MISSION BRIEFING! 🎖️',
+                message: `SOLDIER! Welcome to OPERATION: BRAIN STORM!
+                
+                What's the difference between a good soldier and a great one? FOCUS! And possibly more PROTEIN!
+                
+                Your brain is now a FORTRESS! Defend it against confusion! Attack with PRECISION!
+                
+                Remember the three rules: CONCENTRATE, CONCENTRATE, and when in doubt... CONCENTRATE MORE! MOVE OUT! 🏰⚡`
+            }
+        ];
+        
+        // Select random message
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        
+        this.showMotivationalPopup(
+            randomMessage.title,
+            randomMessage.message,
+            'SIR YES SIR! 🫡',
+            () => this.actuallyStartGame()
+        );
+    }
+    
+    showBroEndPopup(message, totalCorrect, totalAvailableMatches, perfectScore) {
+        let broMessage;
+        let title;
+        
+        // Performance-based feedback
+        if (perfectScore) {
+            title = 'OUTSTANDING SOLDIER! 🏆';
+            broMessage = `INCREDIBLE BRO! You just crushed it like a CHAMPION!
+            
+            Perfect score = perfect GAINS! Your brain is now SWOLE as hell! 
+            
+            You're not just training - you're DOMINATING! Keep this energy, warrior! 💪🔥`;
+        } else if (totalCorrect / totalAvailableMatches >= 0.8) {
+            title = 'EXCELLENT WORK SOLDIER! 💪';
+            broMessage = `Outstanding performance! ${totalCorrect}/${totalAvailableMatches} - that's some SOLID training!
+            
+            Your mental muscles are getting STRONGER! I can see the dedication! 
+            
+            Keep pushing like this and you'll be a brain training BEAST! 🧠💪`;
+        } else if (totalCorrect / totalAvailableMatches >= 0.6) {
+            title = 'GOOD WORK BRO! 👍';
+            broMessage = `Good effort soldier! ${totalCorrect}/${totalAvailableMatches} - you're making progress!
+            
+            Remember: even Schwarzenegger started somewhere! Your brain needs time to BUILD! 
+            
+            Stay consistent, stay focused, and the GAINS will come! 💪`;
+        } else if (totalCorrect / totalAvailableMatches >= 0.4) {
+            title = 'SERGEANT STEEL IS NOT IMPRESSED! 😠';
+            broMessage = `${totalCorrect}/${totalAvailableMatches}?! COME ON! What is this, amateur hour?!
+            
+            DROP AND GIVE ME TWENTY BRAIN PUSHUPS! Your neurons are WEAKER than wet tissue paper! 
+            
+            I've seen NOODLES with more backbone than your performance! GET IT TOGETHER SOLDIER! 💪⚡`;
+        } else {
+            title = 'TOTAL MISSION FAILURE! 🚨';
+            broMessage = `${totalCorrect}/${totalAvailableMatches}?! WHAT THE HECK IS THIS?!
+            
+            Listen up RECRUIT! I've trained MONKEYS that could do better blindfolded! Your brain is more scrambled than Sunday eggs!
+            
+            You call this training?! My GRANDMA could beat this score! Time for INTENSIVE BOOT CAMP!
+            
+            No TV, no snacks, no NOTHING until you show me some REAL mental muscle! DO YOU COPY?! 🔥💀⚡`;
+        }
+        
+        this.showMotivationalPopup(title, broMessage, 'TRAIN AGAIN!', () => this.resetGame());
+    }
+    
+    showMotivationalPopup(title, message, buttonText, callback) {
+        // Create popup with Italian flag gradient background
+        const popup = document.createElement('div');
+        popup.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-in;
+        `;
+        
+        const popupContent = document.createElement('div');
+        popupContent.style.cssText = `
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+            border: 4px solid #f39c12;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.5s ease-out;
+        `;
+        
+        const contentInner = document.createElement('div');
+        contentInner.style.cssText = `
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #333;
+        `;
+        
+        const titleEl = document.createElement('h2');
+        titleEl.textContent = title;
+        titleEl.style.cssText = `
+            margin: 0 0 20px 0;
+            color: #d32f2f;
+            font-size: 1.8em;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        `;
+        
+        const messageEl = document.createElement('p');
+        messageEl.style.cssText = `
+            margin: 0 0 25px 0;
+            color: #333;
+            font-size: 1.1em;
+            line-height: 1.5;
+            white-space: pre-line;
+        `;
+        messageEl.textContent = message;
+        
+        const button = document.createElement('button');
+        button.textContent = buttonText;
+        button.style.cssText = `
+            background: linear-gradient(45deg, #d32f2f, #f44336);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
+            transition: all 0.3s ease;
+        `;
+        
+        button.onmouseover = () => {
+            button.style.transform = 'translateY(-2px)';
+            button.style.boxShadow = '0 6px 20px rgba(211, 47, 47, 0.6)';
+        };
+        
+        button.onmouseout = () => {
+            button.style.transform = 'translateY(0)';
+            button.style.boxShadow = '0 4px 15px rgba(211, 47, 47, 0.4)';
+        };
+        
+        button.onclick = () => {
+            document.body.removeChild(popup);
+            if (callback) callback();
+        };
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideIn {
+                from { transform: scale(0.8) translateY(-50px); opacity: 0; }
+                to { transform: scale(1) translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        contentInner.appendChild(titleEl);
+        contentInner.appendChild(messageEl);
+        contentInner.appendChild(button);
+        popupContent.appendChild(contentInner);
+        popup.appendChild(popupContent);
+        document.body.appendChild(popup);
+        
+        // Auto-remove style element after animation
+        setTimeout(() => {
+            if (document.head.contains(style)) {
+                document.head.removeChild(style);
+            }
+        }, 1000);
+    }
+    
+    generateRegularSequence(totalRounds, positionMatches, letterMatches, colorMatches) {
+        // Generate regular dual n-back sequence (used by bro mode)
+        this.sequence = [];
+        
+        // Initialize with random values
+        for (let i = 0; i < totalRounds; i++) {
+            this.sequence.push({
+                position: Math.floor(Math.random() * (this.gridSize * this.gridSize)),
+                letter: this.letters[Math.floor(Math.random() * this.letters.length)],
+                color: this.colors[Math.floor(Math.random() * this.colors.length)]
+            });
+        }
+        
+        // Place matches randomly
+        const matchableRounds = [];
+        for (let i = this.nBack; i < totalRounds; i++) {
+            matchableRounds.push(i);
+        }
+        
+        // Shuffle and place position matches
+        const shuffled = [...matchableRounds].sort(() => Math.random() - 0.5);
+        for (let i = 0; i < positionMatches && i < shuffled.length; i++) {
+            const round = shuffled[i];
+            this.sequence[round].position = this.sequence[round - this.nBack].position;
+        }
+        
+        // Place letter matches
+        const remainingRounds = shuffled.slice(positionMatches);
+        for (let i = 0; i < letterMatches && i < remainingRounds.length; i++) {
+            const round = remainingRounds[i];
+            this.sequence[round].letter = this.sequence[round - this.nBack].letter;
+        }
+        
+        // Store actual counts
+        this.actualPositionMatches = positionMatches;
+        this.actualLetterMatches = letterMatches;
+        this.actualColorMatches = colorMatches || 0;
     }
 }
 

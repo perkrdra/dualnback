@@ -221,6 +221,12 @@ body {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* Visual mode color styles */
+.grid-cell.visual-mode {
+    border: 3px solid white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
 #response-buttons {
     display: flex;
     flex-direction: column;
