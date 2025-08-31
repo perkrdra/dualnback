@@ -1502,23 +1502,43 @@ class DualNBackGame {
         
         this.sequence = [];
         
-        // Create arrays to track used positions and letters to avoid lures
-        const usedPositions = new Array(totalRounds).fill(-1);
-        const usedLetters = new Array(totalRounds).fill('');
+        // Step 1: Decide which rounds will have matches
+        const matchableRounds = [];
+        for (let i = this.nBack; i < totalRounds; i++) {
+            matchableRounds.push(i);
+        }
         
-        // First pass: generate base sequence with good separation
+        // Shuffle and select rounds for matches
+        const shuffled = [...matchableRounds].sort(() => Math.random() - 0.5);
+        const positionMatchRounds = new Set(shuffled.slice(0, positionMatches));
+        const letterMatchRounds = new Set(shuffled.slice(positionMatches, positionMatches + letterMatches));
+        
+        // Step 2: Generate the complete sequence ensuring no lures
+        const usedPositions = new Array(totalRounds);
+        const usedLetters = new Array(totalRounds);
+        
         for (let i = 0; i < totalRounds; i++) {
             let position, letter;
             
-            // For positions, ensure no repeats within n+1 steps to avoid lures
-            do {
-                position = Math.floor(Math.random() * (this.gridSize * this.gridSize));
-            } while (this.hasRecentValue(usedPositions, i, position, this.nBack + 1));
+            if (i >= this.nBack && positionMatchRounds.has(i)) {
+                // This round should have a position match
+                position = usedPositions[i - this.nBack];
+            } else {
+                // Generate a position that doesn't create lures
+                do {
+                    position = Math.floor(Math.random() * (this.gridSize * this.gridSize));
+                } while (this.wouldCreateLure(usedPositions, i, position));
+            }
             
-            // For letters, ensure no repeats within n+1 steps to avoid lures
-            do {
-                letter = this.letters[Math.floor(Math.random() * this.letters.length)];
-            } while (this.hasRecentValue(usedLetters, i, letter, this.nBack + 1));
+            if (i >= this.nBack && letterMatchRounds.has(i)) {
+                // This round should have a letter match
+                letter = usedLetters[i - this.nBack];
+            } else {
+                // Generate a letter that doesn't create lures
+                do {
+                    letter = this.letters[Math.floor(Math.random() * this.letters.length)];
+                } while (this.wouldCreateLure(usedLetters, i, letter));
+            }
             
             usedPositions[i] = position;
             usedLetters[i] = letter;
@@ -1530,44 +1550,26 @@ class DualNBackGame {
             });
         }
         
-        // Second pass: strategically place exact matches
-        const matchableRounds = [];
-        for (let i = this.nBack; i < totalRounds; i++) {
-            matchableRounds.push(i);
-        }
-        
-        // Shuffle match positions
-        for (let i = matchableRounds.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [matchableRounds[i], matchableRounds[j]] = [matchableRounds[j], matchableRounds[i]];
-        }
-        
-        // Place position matches
-        const positionMatchRounds = new Set();
-        for (let i = 0; i < Math.min(positionMatches, matchableRounds.length); i++) {
-            const round = matchableRounds[i];
-            this.sequence[round].position = this.sequence[round - this.nBack].position;
-            positionMatchRounds.add(round);
-        }
-        
-        // Place letter matches on different rounds
-        const letterMatchRounds = new Set();
-        let letterCount = 0;
-        for (let i = 0; i < matchableRounds.length && letterCount < letterMatches; i++) {
-            const round = matchableRounds[i];
-            if (!positionMatchRounds.has(round)) {
-                this.sequence[round].letter = this.sequence[round - this.nBack].letter;
-                letterMatchRounds.add(round);
-                letterCount++;
-            }
-        }
-        
         // Store actual match counts
         this.actualPositionMatches = positionMatchRounds.size;
         this.actualLetterMatches = letterMatchRounds.size;
         this.actualColorMatches = 0;
         
         console.log(`Generated EASY sequence with exactly ${this.actualPositionMatches} position and ${this.actualLetterMatches} letter matches for ${this.trialsPerSession} trials (no lures)`);
+    }
+    
+    wouldCreateLure(array, currentIndex, value) {
+        // Check if this value would create a lure (appear within n steps but not exactly n steps back)
+        for (let lookback = 1; lookback <= this.nBack; lookback++) {
+            const checkIndex = currentIndex - lookback;
+            if (checkIndex >= 0 && array[checkIndex] === value) {
+                if (lookback !== this.nBack) {
+                    // This would be a lure (same value but not n-back)
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     
     hasRecentValue(array, currentIndex, value, lookbackRange) {
@@ -1598,7 +1600,7 @@ class DualNBackGame {
             },
             {
                 title: 'MENTAL MAYHEM! ⚡',
-                message: `Why don't brain cells get lost?\nThey know their POSITION!\n\nLET'S GO! 🧠`
+                message: `Why don't brain cells get lost?\nThey know their POSITION!\n\nTIME TO DOMINATE! 🧠`
             }
         ];
         

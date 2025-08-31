@@ -97,8 +97,8 @@
         }
         
         .supplement-content {
-            max-height: 800px;
-            overflow: hidden;
+            max-height: 1200px;
+            overflow: visible;
             transition: max-height 0.3s ease;
         }
         
@@ -108,9 +108,11 @@
         
         .supplement-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
             margin-top: 20px;
+            max-height: none;
+            overflow: visible;
         }
         
         .supplement-item {
@@ -329,12 +331,12 @@
             const today = new Date().toDateString();
             const todaysProgress = sessionsByDate[today]?.length || 0;
             
-            // Calculate exam score (still based on 25 consecutive days with 10+ sessions)
+            // Calculate exam score (based on 25 consecutive days with 10+ sessions)
             const sortedDates = Object.keys(sessionsByDate).sort((a, b) => new Date(a) - new Date(b));
-            const qualifyingDays = [];
+            const examQualifyingDays = [];
             for (const date of sortedDates) {
                 if (sessionsByDate[date].length >= 10) {
-                    qualifyingDays.push({
+                    examQualifyingDays.push({
                         date: new Date(date),
                         sessionsCount: sessionsByDate[date].length,
                         averageScore: Math.round(sessionsByDate[date].reduce((sum, s) => sum + (s.totalScore || 0), 0) / sessionsByDate[date].length)
@@ -343,22 +345,21 @@
             }
             
             let examScore = null;
-            let currentStreak = 0;
             
             // Check for exam score (25 consecutive days with 10+ sessions)
             let i = 0;
-            while (i < qualifyingDays.length) {
+            while (i < examQualifyingDays.length) {
                 let consecutiveCount = 1;
-                let currentDate = qualifyingDays[i].date;
-                let totalScore = qualifyingDays[i].averageScore;
+                let currentDate = examQualifyingDays[i].date;
+                let totalScore = examQualifyingDays[i].averageScore;
                 
                 // Count consecutive days
-                while (i + consecutiveCount < qualifyingDays.length) {
-                    const nextDate = qualifyingDays[i + consecutiveCount].date;
+                while (i + consecutiveCount < examQualifyingDays.length) {
+                    const nextDate = examQualifyingDays[i + consecutiveCount].date;
                     const dayDifference = (nextDate - currentDate) / (1000 * 60 * 60 * 24);
                     
                     if (dayDifference === consecutiveCount) {
-                        totalScore += qualifyingDays[i + consecutiveCount].averageScore;
+                        totalScore += examQualifyingDays[i + consecutiveCount].averageScore;
                         consecutiveCount++;
                         currentDate = nextDate;
                     } else {
@@ -369,25 +370,51 @@
                 // Check for exam score (25 consecutive days)
                 if (consecutiveCount >= 25 && !examScore) {
                     const groupAverageScore = Math.round(totalScore / consecutiveCount);
-                    const activeSupplements = getActiveSupplements(currentSupplements, qualifyingDays[i].date, sessions);
+                    const activeSupplements = getActiveSupplements(currentSupplements, examQualifyingDays[i].date, sessions);
                     examScore = {
                         score: groupAverageScore,
                         supplements: activeSupplements,
-                        completedDate: new Date(qualifyingDays[i].date)
+                        completedDate: new Date(examQualifyingDays[i].date)
                     };
                 }
                 
-                // Update current streak for exam progress
-                const today = new Date();
-                const lastDayInGroup = new Date(qualifyingDays[i].date);
-                lastDayInGroup.setDate(lastDayInGroup.getDate() + consecutiveCount - 1);
-                const daysSinceLastDay = Math.floor((today - lastDayInGroup) / (1000 * 60 * 60 * 24));
-                
-                if (daysSinceLastDay <= 1) {
-                    currentStreak = consecutiveCount;
-                }
-                
                 i += consecutiveCount;
+            }
+            
+            // Calculate study streak (based on 5+ sessions per day)
+            const studyQualifyingDays = [];
+            for (const date of sortedDates) {
+                if (sessionsByDate[date].length >= 5) {
+                    studyQualifyingDays.push({
+                        date: new Date(date),
+                        sessionsCount: sessionsByDate[date].length
+                    });
+                }
+            }
+            
+            let currentStreak = 0;
+            
+            // Calculate current study streak (consecutive days with 5+ sessions)
+            if (studyQualifyingDays.length > 0) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Start of today
+                
+                // Work backwards from most recent qualifying day
+                const sortedStudyDays = studyQualifyingDays.sort((a, b) => b.date - a.date);
+                
+                for (let j = 0; j < sortedStudyDays.length; j++) {
+                    const dayDate = new Date(sortedStudyDays[j].date);
+                    dayDate.setHours(0, 0, 0, 0);
+                    
+                    const daysSinceToday = Math.floor((today - dayDate) / (1000 * 60 * 60 * 24));
+                    
+                    // Check if this day should be part of the current streak
+                    if (daysSinceToday === j || (j === 0 && daysSinceToday <= 1)) {
+                        currentStreak++;
+                    } else {
+                        break;
+                    }
+                }
             }
             
             return { 
