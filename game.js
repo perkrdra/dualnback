@@ -78,6 +78,10 @@ class DualNBackGame {
         
         // Session tracking
         this.sessionStartTime = null;
+        
+        // Challenge system
+        this.currentChallenge = null;
+        this.checkForIncomingChallenge();
     }
 
     initGrid() {
@@ -1196,8 +1200,72 @@ class DualNBackGame {
 
         // Format message with HTML
         const htmlMessage = message.replace(/\n/g, '<br>').replace(/🎉/g, '<span style="font-size: 30px;">🎉</span>');
+        
+        // Create challenge section if score is decent (60%+)
+        const showChallenge = score >= totalAvailableMatches * 0.6;
+        const challengeSection = showChallenge ? `
+            <div style="
+                margin-top: 25px;
+                padding-top: 20px;
+                border-top: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)'};
+            ">
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: ${textColor};">Challenge a Friend!</h3>
+                <p style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.9;">Add a personal message to your challenge:</p>
+                <textarea id="custom-challenge-message" placeholder="Optional: Add your own challenge message (e.g., 'Think you're smarter than me?')" style="
+                    width: 100%;
+                    max-width: 400px;
+                    height: 60px;
+                    padding: 10px;
+                    border: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.4)' : '#ccc'};
+                    border-radius: 8px;
+                    font-size: 14px;
+                    margin-bottom: 15px;
+                    resize: vertical;
+                    box-sizing: border-box;
+                    background: ${textColor === 'white' ? 'rgba(255,255,255,0.1)' : 'white'};
+                    color: ${textColor === 'white' ? 'white' : '#333'};
+                "></textarea>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button id="challenge-copy-btn" style="
+                        padding: 8px 16px;
+                        font-size: 14px;
+                        background: ${textColor === 'white' ? 'rgba(255,255,255,0.2)' : '#f0f0f0'};
+                        color: ${textColor};
+                        border: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.4)' : '#ccc'};
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        transition: all 0.2s;
+                    ">📋 Copy Challenge</button>
+                    <button id="challenge-email-btn" style="
+                        padding: 8px 16px;
+                        font-size: 14px;
+                        background: ${textColor === 'white' ? 'rgba(255,255,255,0.2)' : '#f0f0f0'};
+                        color: ${textColor};
+                        border: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.4)' : '#ccc'};
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        transition: all 0.2s;
+                    ">✉️ Email Challenge</button>
+                    <button id="challenge-social-btn" style="
+                        padding: 8px 16px;
+                        font-size: 14px;
+                        background: ${textColor === 'white' ? 'rgba(255,255,255,0.2)' : '#f0f0f0'};
+                        color: ${textColor};
+                        border: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.4)' : '#ccc'};
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        transition: all 0.2s;
+                    ">🚀 Share Results</button>
+                </div>
+            </div>
+        ` : '';
+        
         popup.innerHTML = `
             <div style="white-space: pre-wrap;">${htmlMessage}</div>
+            ${challengeSection}
             <button id="session-ok-btn" style="
                 margin-top: 30px;
                 padding: 15px 30px;
@@ -1223,12 +1291,618 @@ class DualNBackGame {
             overlay.remove();
             style.remove();
         };
+
+        // Add challenge button functionality
+        if (showChallenge) {
+            const copyBtn = document.getElementById('challenge-copy-btn');
+            const emailBtn = document.getElementById('challenge-email-btn');
+            const socialBtn = document.getElementById('challenge-social-btn');
+
+            // Copy challenge button
+            if (copyBtn) {
+                copyBtn.onmouseover = () => copyBtn.style.transform = 'scale(1.05)';
+                copyBtn.onmouseout = () => copyBtn.style.transform = 'scale(1)';
+                copyBtn.onclick = () => {
+                    const customMessage = document.getElementById('custom-challenge-message')?.value || '';
+                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, customMessage);
+                    navigator.clipboard.writeText(challengeData.shareText).then(() => {
+                        copyBtn.textContent = '✅ Copied!';
+                        setTimeout(() => copyBtn.textContent = '📋 Copy Challenge', 2000);
+                    });
+                };
+            }
+
+            // Email challenge button
+            if (emailBtn) {
+                emailBtn.onmouseover = () => emailBtn.style.transform = 'scale(1.05)';
+                emailBtn.onmouseout = () => emailBtn.style.transform = 'scale(1)';
+                emailBtn.onclick = () => {
+                    const customMessage = document.getElementById('custom-challenge-message')?.value || '';
+                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, customMessage);
+                    const subject = encodeURIComponent(challengeData.emailSubject);
+                    const body = encodeURIComponent(challengeData.emailBody);
+                    window.open(`mailto:?subject=${subject}&body=${body}`);
+                };
+            }
+
+            // Social share button
+            if (socialBtn) {
+                socialBtn.onmouseover = () => socialBtn.style.transform = 'scale(1.05)';
+                socialBtn.onmouseout = () => socialBtn.style.transform = 'scale(1)';
+                socialBtn.onclick = () => {
+                    const customMessage = document.getElementById('custom-challenge-message')?.value || '';
+                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, customMessage);
+                    if (navigator.share) {
+                        navigator.share({
+                            title: challengeData.shareTitle,
+                            text: challengeData.shareText,
+                            url: challengeData.challengeUrl
+                        });
+                    } else {
+                        // Fallback to Twitter/X
+                        const tweetText = encodeURIComponent(challengeData.shareText + ' ' + challengeData.challengeUrl);
+                        window.open(`https://twitter.com/intent/tweet?text=${tweetText}`);
+                    }
+                };
+            }
+        }
+    }
+
+    generateChallengeData(score, totalAvailable, customMessage = '') {
+        const percentage = Math.round((score / totalAvailable) * 100);
+        const gameMode = this.gameMode === 'dual' ? 'Dual N-Back' :
+                        this.gameMode === 'dual-easy' ? 'Dual N-Back (Easy)' :
+                        this.gameMode === 'position' ? 'Position Only' :
+                        this.gameMode === 'letter' ? 'Letter Only' :
+                        this.gameMode === 'visual' ? 'Visual N-Back' :
+                        this.gameMode === 'bro' ? 'Bro Mode' : 'N-Back';
+
+        const performanceLevel = percentage >= 100 ? '🎉 PERFECT SCORE!' :
+                               percentage >= 90 ? '🔥 AMAZING!' :
+                               percentage >= 80 ? '⭐ EXCELLENT!' :
+                               percentage >= 70 ? '💪 GREAT JOB!' :
+                               '🧠 GOOD EFFORT!';
+
+        // Generate unique challenge ID and create challenge URL with parameters
+        const challengeId = this.generateChallengeId();
+        const challengeParams = new URLSearchParams({
+            challenge: challengeId,
+            mode: this.gameMode,
+            level: this.nBack,
+            trials: this.trialsPerSession,
+            target_score: score,
+            target_total: totalAvailable,
+            challenger: this.getPlayerName() || 'Anonymous'
+        });
+        
+        const challengeUrl = `${window.location.origin}${window.location.pathname}?${challengeParams.toString()}`;
+        const baseUrl = window.location.origin + window.location.pathname;
+        
+        // Include custom message if provided
+        const customMessageText = customMessage.trim() ? `\n\n"${customMessage.trim()}"\n` : '\n';
+        
+        const shareText = `${performanceLevel} I just scored ${score}/${totalAvailable} (${percentage}%) on ${gameMode} Level ${this.nBack}-Back brain training! 🧠${customMessageText}\nCan you beat my score? Accept my challenge:`;
+        
+        const shareTitle = `Brain Training Challenge - ${percentage}% on ${gameMode}!`;
+        
+        const emailSubject = `🧠 Brain Training Challenge - Can you beat my ${percentage}% score?`;
+        
+        const emailBody = `Hey!\n\n${performanceLevel}\n\nI just completed a brain training session and scored ${score} out of ${totalAvailable} matches (${percentage}%) on ${gameMode} Level ${this.nBack}-Back!${customMessage.trim() ? `\n\n"${customMessage.trim()}"` : ''}\n\nThink you can do better? 🤔\n\n🎯 ACCEPT MY CHALLENGE:\n${challengeUrl}\n\nThis link will set up the exact same conditions:\n• ${gameMode} mode\n• Level ${this.nBack}-Back difficulty\n• ${this.trialsPerSession} trials\n• Target to beat: ${score}/${totalAvailable} (${percentage}%)\n\nTry the scientifically-backed dual n-back training that improves working memory and fluid intelligence:\n\n• Based on cognitive neuroscience research\n• Tracks your progress over time\n• Multiple difficulty levels\n• Completely free to use\n\nLet me know how you do! I'm curious to see if you can beat my score.\n\nGood luck! 🧠💪`;
+
+        // Store challenge data
+        this.storeChallengeData({
+            id: challengeId,
+            timestamp: new Date().toISOString(),
+            challenger: this.getPlayerName() || 'Anonymous',
+            mode: this.gameMode,
+            level: this.nBack,
+            trials: this.trialsPerSession,
+            score: score,
+            totalAvailable: totalAvailable,
+            percentage: percentage,
+            status: 'sent'
+        });
+
+        return {
+            challengeId,
+            shareText,
+            shareTitle,
+            emailSubject,
+            emailBody,
+            challengeUrl,
+            baseUrl,
+            score,
+            totalAvailable,
+            percentage,
+            gameMode,
+            level: this.nBack
+        };
+    }
+
+    generateChallengeId() {
+        // Generate unique challenge ID using timestamp and random string
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substr(2, 9);
+        return `${timestamp}-${random}`;
+    }
+
+    getPlayerName() {
+        // Try to get player name from study data or localStorage
+        const userData = JSON.parse(localStorage.getItem('studyUserData') || '{}');
+        return userData.username || userData.participantId || localStorage.getItem('playerName') || null;
+    }
+
+    storeChallengeData(challengeData) {
+        // Store challenge in localStorage for tracking
+        const challenges = JSON.parse(localStorage.getItem('sentChallenges') || '[]');
+        challenges.push(challengeData);
+        
+        // Keep only last 50 challenges to avoid storage bloat
+        if (challenges.length > 50) {
+            challenges.splice(0, challenges.length - 50);
+        }
+        
+        localStorage.setItem('sentChallenges', JSON.stringify(challenges));
     }
 
     updateTrialDisplay() {
         if (this.trialValue) {
             this.trialValue.textContent = `${this.currentTrial}/${this.trialsPerSession}`;
         }
+    }
+
+    checkForIncomingChallenge() {
+        // Check URL parameters for challenge data
+        const urlParams = new URLSearchParams(window.location.search);
+        const challengeId = urlParams.get('challenge');
+        
+        if (challengeId) {
+            const challengeData = {
+                id: challengeId,
+                mode: urlParams.get('mode'),
+                level: parseInt(urlParams.get('level')),
+                trials: parseInt(urlParams.get('trials')),
+                targetScore: parseInt(urlParams.get('target_score')),
+                targetTotal: parseInt(urlParams.get('target_total')),
+                challenger: urlParams.get('challenger')
+            };
+            
+            // Store and display challenge
+            this.currentChallenge = challengeData;
+            this.showChallengeAcceptPopup(challengeData);
+            
+            // Clean URL without reloading page
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    showChallengeAcceptPopup(challengeData) {
+        const percentage = Math.round((challengeData.targetScore / challengeData.targetTotal) * 100);
+        const modeName = challengeData.mode === 'dual' ? 'Dual N-Back' :
+                        challengeData.mode === 'dual-easy' ? 'Dual N-Back (Easy)' :
+                        challengeData.mode === 'position' ? 'Position Only' :
+                        challengeData.mode === 'letter' ? 'Letter Only' :
+                        challengeData.mode === 'visual' ? 'Visual N-Back' :
+                        challengeData.mode === 'bro' ? 'Bro Mode' : 'N-Back';
+
+        // Create challenge popup
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease-out;
+        `;
+
+        const popup = document.createElement('div');
+        popup.style.cssText = `
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.3s ease-out;
+        `;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(30px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        popup.innerHTML = `
+            <h2 style="margin: 0 0 20px 0; font-size: 1.8em;">🎯 Challenge Received!</h2>
+            <p style="margin: 0 0 25px 0; font-size: 1.2em; opacity: 0.9;">
+                <strong>${challengeData.challenger}</strong> has challenged you!
+            </p>
+            <div style="
+                background: rgba(255, 255, 255, 0.1);
+                padding: 25px;
+                border-radius: 15px;
+                margin: 20px 0;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+            ">
+                <h3 style="margin: 0 0 15px 0; color: #fff;">Challenge Details</h3>
+                <div style="text-align: left; margin-left: 20px;">
+                    <p><strong>Mode:</strong> ${modeName}</p>
+                    <p><strong>Level:</strong> ${challengeData.level}-Back</p>
+                    <p><strong>Trials:</strong> ${challengeData.trials}</p>
+                    <p style="font-size: 1.1em; color: #ffd700;"><strong>Score to Beat:</strong> ${challengeData.targetScore}/${challengeData.targetTotal} (${percentage}%)</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                <button id="accept-challenge-btn" style="
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    background: #ffd700;
+                    color: #333;
+                    border: none;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s;
+                ">🚀 Accept Challenge</button>
+                <button id="decline-challenge-btn" style="
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    background: rgba(255, 255, 255, 0.2);
+                    color: white;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s;
+                ">Maybe Later</button>
+            </div>
+        `;
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Add button functionality
+        const acceptBtn = document.getElementById('accept-challenge-btn');
+        const declineBtn = document.getElementById('decline-challenge-btn');
+
+        acceptBtn.onmouseover = () => acceptBtn.style.transform = 'scale(1.05)';
+        acceptBtn.onmouseout = () => acceptBtn.style.transform = 'scale(1)';
+        
+        declineBtn.onmouseover = () => declineBtn.style.transform = 'scale(1.05)';
+        declineBtn.onmouseout = () => declineBtn.style.transform = 'scale(1)';
+
+        acceptBtn.onclick = () => {
+            this.acceptChallenge(challengeData);
+            overlay.remove();
+            style.remove();
+        };
+
+        declineBtn.onclick = () => {
+            this.currentChallenge = null;
+            overlay.remove();
+            style.remove();
+        };
+    }
+
+    acceptChallenge(challengeData) {
+        // Set game parameters to match challenge
+        this.gameMode = challengeData.mode;
+        this.nBack = challengeData.level;
+        this.trialsPerSession = challengeData.trials;
+        
+        // Update UI to reflect challenge settings
+        if (this.gameModeSelect) {
+            this.gameModeSelect.value = challengeData.mode;
+        }
+        
+        this.updateLevel();
+        this.updateTrialDisplay();
+        this.updateButtonsForMode();
+        this.updateButtonLabels();
+        this.updateInstructions();
+
+        // Store accepted challenge for tracking
+        this.storeAcceptedChallenge(challengeData);
+
+        // Show challenge accepted message
+        this.showChallengeAcceptedMessage(challengeData);
+    }
+
+    storeAcceptedChallenge(challengeData) {
+        const acceptedChallenges = JSON.parse(localStorage.getItem('acceptedChallenges') || '[]');
+        const acceptedChallenge = {
+            ...challengeData,
+            acceptedAt: new Date().toISOString(),
+            status: 'accepted'
+        };
+        acceptedChallenges.push(acceptedChallenge);
+        
+        // Keep only last 25 accepted challenges
+        if (acceptedChallenges.length > 25) {
+            acceptedChallenges.splice(0, acceptedChallenges.length - 25);
+        }
+        
+        localStorage.setItem('acceptedChallenges', JSON.stringify(acceptedChallenges));
+    }
+
+    showChallengeAcceptedMessage(challengeData) {
+        const percentage = Math.round((challengeData.targetScore / challengeData.targetTotal) * 100);
+        
+        // Create motivational popup
+        const popup = document.createElement('div');
+        popup.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2552a3 0%, #1e4285 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 2001;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: bounceIn 0.5s ease-out;
+        `;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes bounceIn {
+                0% { transform: translate(-50%, -50%) scale(0.5); }
+                50% { transform: translate(-50%, -50%) scale(1.1); }
+                100% { transform: translate(-50%, -50%) scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        popup.innerHTML = `
+            <h3 style="margin: 0 0 15px 0;">🎯 Challenge Accepted!</h3>
+            <p style="margin: 0 0 20px 0; opacity: 0.9;">
+                Ready to beat ${challengeData.challenger}'s score of ${percentage}%?
+            </p>
+            <p style="margin: 0; font-size: 0.9em; opacity: 0.8;">
+                Game settings have been configured. Click Start when you're ready!
+            </p>
+        `;
+
+        document.body.appendChild(popup);
+
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            popup.remove();
+            style.remove();
+        }, 3000);
+    }
+
+    recordChallengeResult(yourScore, yourTotal) {
+        if (!this.currentChallenge) return;
+
+        const yourPercentage = Math.round((yourScore / yourTotal) * 100);
+        const targetPercentage = Math.round((this.currentChallenge.targetScore / this.currentChallenge.targetTotal) * 100);
+        const won = yourPercentage >= targetPercentage;
+        
+        // Store challenge result
+        const challengeResults = JSON.parse(localStorage.getItem('challengeResults') || '[]');
+        const result = {
+            challengeId: this.currentChallenge.id,
+            challenger: this.currentChallenge.challenger,
+            targetScore: this.currentChallenge.targetScore,
+            targetTotal: this.currentChallenge.targetTotal,
+            targetPercentage: targetPercentage,
+            yourScore: yourScore,
+            yourTotal: yourTotal,
+            yourPercentage: yourPercentage,
+            won: won,
+            completedAt: new Date().toISOString(),
+            mode: this.currentChallenge.mode,
+            level: this.currentChallenge.level
+        };
+        
+        challengeResults.push(result);
+        
+        // Keep only last 50 results
+        if (challengeResults.length > 50) {
+            challengeResults.splice(0, challengeResults.length - 50);
+        }
+        
+        localStorage.setItem('challengeResults', JSON.stringify(challengeResults));
+
+        // Update leaderboard with challenge win if the user won
+        if (won) {
+            this.updateLeaderboardChallengeWin();
+        }
+
+        // Show challenge result popup after a brief delay
+        setTimeout(() => {
+            this.showChallengeResultPopup(result);
+        }, 2000);
+
+        // Clear current challenge
+        this.currentChallenge = null;
+    }
+
+    updateLeaderboardChallengeWin() {
+        // Get current leaderboard
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+        const playerName = this.getPlayerName();
+        
+        if (!playerName) return;
+        
+        // Find user in leaderboard
+        const userIndex = leaderboard.findIndex(entry => entry.username === playerName);
+        
+        if (userIndex >= 0) {
+            // Increment challenge wins
+            leaderboard[userIndex].challengeWins = (leaderboard[userIndex].challengeWins || 0) + 1;
+            
+            // Sort leaderboard after updating challenge wins
+            leaderboard.sort((a, b) => {
+                // Primary sort: highest level
+                if (b.highestLevel !== a.highestLevel) {
+                    return b.highestLevel - a.highestLevel;
+                }
+                
+                // Secondary sort: best score at highest level
+                const aBestScore = a.bestScores && a.bestScores[a.highestLevel] ? a.bestScores[a.highestLevel] : 0;
+                const bBestScore = b.bestScores && b.bestScores[b.highestLevel] ? b.bestScores[b.highestLevel] : 0;
+                
+                if (bBestScore !== aBestScore) {
+                    return bBestScore - aBestScore;
+                }
+                
+                // Tertiary sort: challenge wins (more wins = higher rank)
+                const aChallengeWins = a.challengeWins || 0;
+                const bChallengeWins = b.challengeWins || 0;
+                
+                if (bChallengeWins !== aChallengeWins) {
+                    return bChallengeWins - aChallengeWins;
+                }
+                
+                // Final sort: most recent activity
+                return new Date(b.lastPlayed) - new Date(a.lastPlayed);
+            });
+            
+            // Save updated leaderboard
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+        }
+    }
+
+    showChallengeResultPopup(result) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2500;
+            animation: fadeIn 0.3s ease-out;
+        `;
+
+        const popup = document.createElement('div');
+        const bgColor = result.won ? 
+            'linear-gradient(135deg, #28a745 0%, #20c997 100%)' : 
+            'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)';
+        
+        popup.style.cssText = `
+            background: ${bgColor};
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            animation: bounceIn 0.5s ease-out;
+        `;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes bounceIn {
+                0% { transform: scale(0.5); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        const resultEmoji = result.won ? '🏆' : '💪';
+        const resultTitle = result.won ? 'Challenge Won!' : 'Challenge Complete!';
+        const resultMessage = result.won ? 
+            `Congratulations! You beat ${result.challenger}'s score!` : 
+            `Good effort! ${result.challenger} still holds the record.`;
+
+        popup.innerHTML = `
+            <h2 style="margin: 0 0 20px 0; font-size: 2em;">${resultEmoji} ${resultTitle}</h2>
+            <p style="margin: 0 0 25px 0; font-size: 1.2em; opacity: 0.9;">
+                ${resultMessage}
+            </p>
+            <div style="
+                background: rgba(255, 255, 255, 0.1);
+                padding: 25px;
+                border-radius: 15px;
+                margin: 20px 0;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+            ">
+                <h3 style="margin: 0 0 15px 0;">Score Comparison</h3>
+                <div style="display: flex; justify-content: space-around; text-align: center;">
+                    <div>
+                        <p style="margin: 0; font-size: 0.9em; opacity: 0.8;">Target</p>
+                        <p style="margin: 5px 0 0 0; font-size: 1.3em; font-weight: bold;">${result.targetPercentage}%</p>
+                        <p style="margin: 0; font-size: 0.8em;">${result.challenger}</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-size: 0.9em; opacity: 0.8;">Your Score</p>
+                        <p style="margin: 5px 0 0 0; font-size: 1.3em; font-weight: bold; color: ${result.won ? '#ffd700' : '#ffcccb'};">${result.yourPercentage}%</p>
+                        <p style="margin: 0; font-size: 0.8em;">You</p>
+                    </div>
+                </div>
+            </div>
+            <button id="challenge-result-ok" style="
+                padding: 12px 30px;
+                font-size: 16px;
+                background: white;
+                color: #333;
+                border: none;
+                border-radius: 25px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: all 0.2s;
+                margin-top: 20px;
+            ">${result.won ? 'Share Victory!' : 'Try Again'}</button>
+        `;
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        const okBtn = document.getElementById('challenge-result-ok');
+        okBtn.onmouseover = () => okBtn.style.transform = 'scale(1.05)';
+        okBtn.onmouseout = () => okBtn.style.transform = 'scale(1)';
+        okBtn.onclick = () => {
+            overlay.remove();
+            style.remove();
+            
+            if (result.won) {
+                // Auto-trigger share for victories
+                setTimeout(() => {
+                    const victoryData = this.generateVictoryShareData(result);
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(victoryData.shareText);
+                    }
+                }, 500);
+            }
+        };
+    }
+
+    generateVictoryShareData(result) {
+        const shareText = `🏆 CHALLENGE VICTORY! 🏆\n\nI just beat ${result.challenger}'s challenge!\n\n` +
+                         `Their score: ${result.targetPercentage}%\n` +
+                         `My score: ${result.yourPercentage}%\n\n` +
+                         `Think you can beat us both? Try the brain training challenge:\n` +
+                         `${window.location.origin}${window.location.pathname}`;
+        
+        return { shareText };
     }
 
     updateTrialButtons() {
@@ -1346,6 +2020,11 @@ class DualNBackGame {
             message += `Take your time and focus on the patterns.`;
         }
         
+        // Check if this was a challenge attempt and record result
+        if (this.currentChallenge) {
+            this.recordChallengeResult(totalCorrect, totalAvailableMatches);
+        }
+
         if (this.gameMode === 'bro') {
             this.showBroEndPopup(message, totalCorrect, totalAvailableMatches, perfectScore);
         } else {
@@ -1637,10 +2316,12 @@ class DualNBackGame {
             broMessage = `${totalCorrect}/${totalAvailableMatches}?! OUCH!\n\nEven my GRANDMA could beat that!\nTime for BOOT CAMP! 🔥`;
         }
         
-        this.showMotivationalPopup(title, broMessage, 'TRAIN AGAIN!', () => this.resetGame());
+        // Add challenge functionality for decent scores in Bro Mode too
+        const showBroChallenge = totalCorrect >= totalAvailableMatches * 0.6;
+        this.showMotivationalPopup(title, broMessage, 'TRAIN AGAIN!', () => this.resetGame(), showBroChallenge ? totalCorrect : null, showBroChallenge ? totalAvailableMatches : null);
     }
     
-    showMotivationalPopup(title, message, buttonText, callback) {
+    showMotivationalPopup(title, message, buttonText, callback, challengeScore = null, challengeTotalAvailable = null) {
         // Create clean, minimal popup
         const popup = document.createElement('div');
         popup.style.cssText = `
@@ -1733,6 +2414,103 @@ class DualNBackGame {
         
         popupContent.appendChild(titleEl);
         popupContent.appendChild(messageEl);
+
+        // Add challenge section if score is good enough
+        if (challengeScore !== null && challengeTotalAvailable !== null) {
+            const challengeDiv = document.createElement('div');
+            challengeDiv.style.cssText = `
+                margin: 20px 0;
+                padding-top: 15px;
+                border-top: 1px solid #eee;
+            `;
+
+            const challengeTitle = document.createElement('h4');
+            challengeTitle.textContent = 'Challenge Friends! 💪';
+            challengeTitle.style.cssText = `
+                margin: 0 0 10px 0;
+                color: #2c3e50;
+                font-size: 0.9em;
+            `;
+
+            const challengeMessage = document.createElement('textarea');
+            challengeMessage.placeholder = 'Add trash talk (e.g., "My brain is BIGGER than yours!")';
+            challengeMessage.id = 'bro-challenge-message';
+            challengeMessage.style.cssText = `
+                width: 100%;
+                height: 50px;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 0.8em;
+                margin-bottom: 10px;
+                resize: vertical;
+                box-sizing: border-box;
+            `;
+
+            const challengeButtons = document.createElement('div');
+            challengeButtons.style.cssText = `
+                display: flex;
+                gap: 8px;
+                justify-content: center;
+                flex-wrap: wrap;
+            `;
+
+            // Copy button
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = '📋 Copy';
+            copyBtn.style.cssText = `
+                padding: 6px 12px;
+                font-size: 0.8em;
+                background: #f8f9fa;
+                color: #666;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            `;
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(challengeData.shareText).then(() => {
+                    copyBtn.textContent = '✅ Copied!';
+                    setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
+                });
+            };
+
+            // Email button
+            const emailBtn = document.createElement('button');
+            emailBtn.textContent = '✉️ Email';
+            emailBtn.style.cssText = copyBtn.style.cssText;
+            emailBtn.onclick = () => {
+                const subject = encodeURIComponent(challengeData.emailSubject);
+                const body = encodeURIComponent(challengeData.emailBody);
+                window.open(`mailto:?subject=${subject}&body=${body}`);
+            };
+
+            // Social button
+            const socialBtn = document.createElement('button');
+            socialBtn.textContent = '🚀 Share';
+            socialBtn.style.cssText = copyBtn.style.cssText;
+            socialBtn.onclick = () => {
+                if (navigator.share) {
+                    navigator.share({
+                        title: challengeData.shareTitle,
+                        text: challengeData.shareText,
+                        url: challengeData.challengeUrl
+                    });
+                } else {
+                    const tweetText = encodeURIComponent(challengeData.shareText + ' ' + challengeData.challengeUrl);
+                    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`);
+                }
+            };
+
+            challengeButtons.appendChild(copyBtn);
+            challengeButtons.appendChild(emailBtn);
+            challengeButtons.appendChild(socialBtn);
+            
+            challengeDiv.appendChild(challengeTitle);
+            challengeDiv.appendChild(challengeButtons);
+            popupContent.appendChild(challengeDiv);
+        }
+
         popupContent.appendChild(button);
         popup.appendChild(popupContent);
         document.body.appendChild(popup);

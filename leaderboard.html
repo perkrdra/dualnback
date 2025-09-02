@@ -145,6 +145,18 @@
             font-size: 1.2em;
             margin-right: 8px;
         }
+
+        .challenge-champion {
+            background: linear-gradient(135deg, #fff4e6 0%, #ffe6b3 100%);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+            border-left: 4px solid #FFD700;
+        }
+
+        .challenge-winner {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+        }
     </style>
 </head>
 <body>
@@ -180,10 +192,11 @@
                     <thead>
                         <tr>
                             <th style="width: 8%; text-align: center;">Rank</th>
-                            <th style="width: 25%;">Player</th>
-                            <th style="width: 15%; text-align: center;">Highest Level</th>
-                            <th style="width: 15%; text-align: center;">Best Score</th>
-                            <th style="width: 37%;">Enhancements Used</th>
+                            <th style="width: 22%;">Player</th>
+                            <th style="width: 12%; text-align: center;">Highest Level</th>
+                            <th style="width: 12%; text-align: center;">Best Score</th>
+                            <th style="width: 12%; text-align: center;">Challenge Wins</th>
+                            <th style="width: 34%;">Enhancements Used</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
@@ -302,11 +315,12 @@
                     joinedDate: new Date().toISOString(),
                     country: userData.country || 'OTHER',
                     bestScores: bestScores,
-                    bestScoreSupplements: bestScoreSupplements
+                    bestScoreSupplements: bestScoreSupplements,
+                    challengeWins: 0
                 });
             }
             
-            // Sort by highest level (descending), then by best score at highest level (descending)
+            // Sort by highest level (descending), then by best score at highest level (descending), then by challenge wins
             leaderboard.sort((a, b) => {
                 if (b.highestLevel !== a.highestLevel) {
                     return b.highestLevel - a.highestLevel;
@@ -318,6 +332,14 @@
                 
                 if (bBestScore !== aBestScore) {
                     return bBestScore - aBestScore;
+                }
+                
+                // If same level and score, compare challenge wins
+                const aChallengeWins = a.challengeWins || 0;
+                const bChallengeWins = b.challengeWins || 0;
+                
+                if (bChallengeWins !== aChallengeWins) {
+                    return bChallengeWins - aChallengeWins;
                 }
                 
                 return new Date(b.lastPlayed) - new Date(a.lastPlayed);
@@ -361,6 +383,10 @@
                     <div class="stat-value">${bestScore}</div>
                 </div>
                 <div class="stat-box">
+                    <div class="stat-label">Your Challenge Wins</div>
+                    <div class="stat-value">${userEntry.challengeWins || 0}</div>
+                </div>
+                <div class="stat-box">
                     <div class="stat-label">Total Players</div>
                     <div class="stat-value">${totalPlayers}</div>
                 </div>
@@ -386,7 +412,7 @@
             if (filteredData.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="no-data">No players found for this filter. Be the first!</td>
+                        <td colspan="6" class="no-data">No players found for this filter. Be the first!</td>
                     </tr>
                 `;
                 return;
@@ -409,21 +435,44 @@
                 const supplements = entry.bestScoreSupplements && entry.bestScoreSupplements[entry.highestLevel]
                     ? entry.bestScoreSupplements[entry.highestLevel].join(', ')
                     : '';
+
+                // Challenge wins with special styling for top challenge winners
+                const challengeWins = entry.challengeWins || 0;
+                const challengeWinDisplay = challengeWins > 0 ? 
+                    (challengeWins >= 10 ? `🏆 ${challengeWins}` : 
+                     challengeWins >= 5 ? `🥇 ${challengeWins}` : 
+                     challengeWins >= 3 ? `🥈 ${challengeWins}` : 
+                     challengeWins >= 1 ? `🥉 ${challengeWins}` : challengeWins) 
+                    : '0';
+
+                // Add special highlight for challenge champions (10+ wins)
+                const challengeChampion = challengeWins >= 10;
+                const challengeWinner = challengeWins >= 5;
+                
+                let rowClass = isCurrentUser ? 'user-highlight' : '';
+                if (challengeChampion) {
+                    rowClass += ' challenge-champion';
+                } else if (challengeWinner) {
+                    rowClass += ' challenge-winner';
+                }
                 
                 return `
-                    <tr class="${isCurrentUser ? 'user-highlight' : ''}">
+                    <tr class="${rowClass}">
                         <td style="text-align: center;">
-                            <span class="rank ${rankClass}">${rank}</span>
+                            <span class="rank ${rankClass}">${rank}${challengeChampion ? ' 👑' : ''}</span>
                         </td>
                         <td>
                             <span class="country-flag">${countryFlag}</span>
-                            <span class="username">${entry.username}${isCurrentUser ? ' (You)' : ''}</span>
+                            <span class="username">${entry.username}${isCurrentUser ? ' (You)' : ''}${challengeChampion ? ' 🌟' : challengeWinner ? ' ⭐' : ''}</span>
                         </td>
                         <td style="text-align: center;">
                             <span class="level">${entry.highestLevel}</span>
                         </td>
                         <td style="text-align: center;">
                             <span class="level">${bestScore}</span>
+                        </td>
+                        <td style="text-align: center; font-weight: bold; color: ${challengeWins >= 10 ? '#FFD700' : challengeWins >= 5 ? '#FFA500' : challengeWins >= 3 ? '#CD7F32' : challengeWins >= 1 ? '#4CAF50' : '#666'};">
+                            ${challengeWinDisplay}
                         </td>
                         <td style="font-size: 0.9em; color: #666;">
                             ${supplements || 'No enhancements recorded'}
@@ -450,14 +499,14 @@
         // Add some demo data if leaderboard is empty (remove this in production)
         if (allLeaderboardData.length === 0) {
             const demoData = [
-                { username: "CognitiveMaster", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "US", bestScores: { 5: 18, 4: 16, 3: 14 }, bestScoreSupplements: { 5: ["creatine", "lions-mane", "meditation"], 4: ["creatine", "choline"], 3: ["meditation"] } },
-                { username: "BrainTrainer42", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "GB", bestScores: { 5: 17, 4: 15, 3: 13 }, bestScoreSupplements: { 5: ["modafinil", "l-theanine-caffeine"], 4: ["l-theanine-caffeine"], 3: ["breathing-exercises"] } },
-                { username: "MemoryChamp", highestLevel: 5, lastPlayed: new Date(Date.now() - 24*60*60*1000).toISOString(), country: "CA", bestScores: { 5: 15, 4: 14, 3: 12 }, bestScoreSupplements: { 5: ["bacopa", "phosphatidylserine"], 4: ["bacopa"], 3: [] } },
-                { username: "NeuralNinja", highestLevel: 4, lastPlayed: new Date().toISOString(), country: "JP", bestScores: { 4: 16, 3: 14, 2: 12 }, bestScoreSupplements: { 4: ["huperzine-a", "meditation"], 3: ["meditation"], 2: [] } },
-                { username: "FocusWarrior", highestLevel: 4, lastPlayed: new Date(Date.now() - 2*24*60*60*1000).toISOString(), country: "DE", bestScores: { 4: 14, 3: 13, 2: 11 }, bestScoreSupplements: { 4: ["aniracetam"], 3: [], 2: [] } },
-                { username: "MindAthlete", highestLevel: 4, lastPlayed: new Date().toISOString(), country: "AU", bestScores: { 4: 15, 3: 13, 2: 11 }, bestScoreSupplements: { 4: ["creatine", "breathing-exercises"], 3: ["creatine"], 2: [] } },
-                { username: "ThinkFast", highestLevel: 3, lastPlayed: new Date().toISOString(), country: "SE", bestScores: { 3: 13, 2: 12, 1: 10 }, bestScoreSupplements: { 3: ["nicotine"], 2: [], 1: [] } },
-                { username: "Synaptic", highestLevel: 3, lastPlayed: new Date(Date.now() - 3*24*60*60*1000).toISOString(), country: "FR", bestScores: { 3: 14, 2: 12, 1: 10 }, bestScoreSupplements: { 3: ["pqq", "alcar"], 2: ["pqq"], 1: [] } }
+                { username: "CognitiveMaster", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "US", bestScores: { 5: 18, 4: 16, 3: 14 }, bestScoreSupplements: { 5: ["creatine", "lions-mane", "meditation"], 4: ["creatine", "choline"], 3: ["meditation"] }, challengeWins: 15 },
+                { username: "BrainTrainer42", highestLevel: 5, lastPlayed: new Date().toISOString(), country: "GB", bestScores: { 5: 17, 4: 15, 3: 13 }, bestScoreSupplements: { 5: ["modafinil", "l-theanine-caffeine"], 4: ["l-theanine-caffeine"], 3: ["breathing-exercises"] }, challengeWins: 12 },
+                { username: "MemoryChamp", highestLevel: 5, lastPlayed: new Date(Date.now() - 24*60*60*1000).toISOString(), country: "CA", bestScores: { 5: 15, 4: 14, 3: 12 }, bestScoreSupplements: { 5: ["bacopa", "phosphatidylserine"], 4: ["bacopa"], 3: [] }, challengeWins: 8 },
+                { username: "NeuralNinja", highestLevel: 4, lastPlayed: new Date().toISOString(), country: "JP", bestScores: { 4: 16, 3: 14, 2: 12 }, bestScoreSupplements: { 4: ["huperzine-a", "meditation"], 3: ["meditation"], 2: [] }, challengeWins: 6 },
+                { username: "FocusWarrior", highestLevel: 4, lastPlayed: new Date(Date.now() - 2*24*60*60*1000).toISOString(), country: "DE", bestScores: { 4: 14, 3: 13, 2: 11 }, bestScoreSupplements: { 4: ["aniracetam"], 3: [], 2: [] }, challengeWins: 3 },
+                { username: "MindAthlete", highestLevel: 4, lastPlayed: new Date().toISOString(), country: "AU", bestScores: { 4: 15, 3: 13, 2: 11 }, bestScoreSupplements: { 4: ["creatine", "breathing-exercises"], 3: ["creatine"], 2: [] }, challengeWins: 2 },
+                { username: "ThinkFast", highestLevel: 3, lastPlayed: new Date().toISOString(), country: "SE", bestScores: { 3: 13, 2: 12, 1: 10 }, bestScoreSupplements: { 3: ["nicotine"], 2: [], 1: [] }, challengeWins: 1 },
+                { username: "Synaptic", highestLevel: 3, lastPlayed: new Date(Date.now() - 3*24*60*60*1000).toISOString(), country: "FR", bestScores: { 3: 14, 2: 12, 1: 10 }, bestScoreSupplements: { 3: ["pqq", "alcar"], 2: ["pqq"], 1: [] }, challengeWins: 0 }
             ];
             localStorage.setItem('leaderboard', JSON.stringify(demoData));
             loadLeaderboard();
