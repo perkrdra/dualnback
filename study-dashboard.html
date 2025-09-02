@@ -399,22 +399,46 @@
                 const today = new Date();
                 today.setHours(0, 0, 0, 0); // Start of today
                 
-                // Work backwards from most recent qualifying day
-                const sortedStudyDays = studyQualifyingDays.sort((a, b) => b.date - a.date);
+                // Sort study days chronologically (oldest first)
+                const sortedStudyDays = studyQualifyingDays.sort((a, b) => a.date - b.date);
                 
-                for (let j = 0; j < sortedStudyDays.length; j++) {
-                    const dayDate = new Date(sortedStudyDays[j].date);
-                    dayDate.setHours(0, 0, 0, 0);
+                // Find the longest streak that includes today or yesterday
+                let longestCurrentStreak = 0;
+                
+                // Check all possible ending points for streaks
+                for (let endIdx = sortedStudyDays.length - 1; endIdx >= 0; endIdx--) {
+                    const endDate = new Date(sortedStudyDays[endIdx].date);
+                    endDate.setHours(0, 0, 0, 0);
                     
-                    const daysSinceToday = Math.floor((today - dayDate) / (1000 * 60 * 60 * 24));
+                    const daysSinceEnd = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
                     
-                    // Check if this day should be part of the current streak
-                    if (daysSinceToday === j || (j === 0 && daysSinceToday <= 1)) {
-                        currentStreak++;
-                    } else {
-                        break;
+                    // Only consider streaks that end today or yesterday (grace period)
+                    if (daysSinceEnd > 1) continue;
+                    
+                    // Count backwards to find consecutive days
+                    let streakLength = 1;
+                    let currentDate = endDate;
+                    
+                    for (let i = endIdx - 1; i >= 0; i--) {
+                        const prevDate = new Date(sortedStudyDays[i].date);
+                        prevDate.setHours(0, 0, 0, 0);
+                        
+                        const daysBetween = Math.floor((currentDate - prevDate) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysBetween === 1) {
+                            // Consecutive day found
+                            streakLength++;
+                            currentDate = prevDate;
+                        } else {
+                            // Gap found, streak ends
+                            break;
+                        }
                     }
+                    
+                    longestCurrentStreak = Math.max(longestCurrentStreak, streakLength);
                 }
+                
+                currentStreak = longestCurrentStreak;
             }
             
             return { 
@@ -568,9 +592,9 @@
                             <h2>Track Your Enhancements & Techniques</h2>
                             <p>Select what you're currently using to enhance your training:</p>
                         </div>
-                        <div class="collapse-icon" id="collapse-icon">▼</div>
+                        <div class="collapse-icon collapsed" id="collapse-icon">▶</div>
                     </div>
-                    <div class="supplement-content" id="supplement-content">
+                    <div class="supplement-content collapsed" id="supplement-content">
                         <div class="supplement-list">
                             <div class="supplement-item">
                                 <input type="checkbox" id="creatine" ${supplements.includes('creatine') ? 'checked' : ''}>
