@@ -664,6 +664,46 @@
             const { studyScores, examScore, currentStreak, consecutiveDaysProgress, todaysProgress, totalStudyPoints } = calculateStudyScores(sessions);
             
             const dashboardHTML = `
+                ${Object.keys(scoresByLevel).length > 0 ? `
+                <div class="progress-section">
+                    <h2>Highest Scores by N-Back Level</h2>
+                    <p>Your best performance at each difficulty level:</p>
+                    <div class="score-cards-container" id="score-cards-container">
+                        <div class="score-cards-track" id="score-cards-track">
+                            ${Object.keys(scoresByLevel).sort((a, b) => parseInt(a) - parseInt(b)).map(level => {
+                                const levelData = scoresByLevel[level];
+                                const activeSupplement = levelData.supplements && levelData.supplements.length > 0 
+                                    ? levelData.supplements.filter(s => s && s.trim()).join(', ')
+                                    : '';
+                                return `
+                                <div class="score-card">
+                                    <div class="score-card-level">Level ${level}-Back</div>
+                                    <div class="score-card-score">${levelData.score}</div>
+                                    <div class="score-card-supplements">
+                                        ${activeSupplement ? 
+                                            `Enhancements: ${activeSupplement}` : 
+                                            'No enhancements recorded'}
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div class="carousel-nav">
+                        <div class="carousel-arrow left" id="carousel-prev">‹</div>
+                        <div class="carousel-dots" id="carousel-dots">
+                            ${Object.keys(scoresByLevel).map((level, index) => `
+                                <div class="carousel-dot${index === 0 ? ' active' : ''}"></div>
+                            `).join('')}
+                        </div>
+                        <div class="carousel-arrow right" id="carousel-next">›</div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <span class="carousel-counter" id="carousel-counter">1 / ${Object.keys(scoresByLevel).length}</span>
+                    </div>
+                </div>
+                ` : ''}
+                
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Total Sessions</div>
@@ -819,42 +859,6 @@
                                 </span>
                             ` : '<br><span style="font-size: 0.9em; color: #666; font-weight: normal;">No supplements recorded</span>'}
                         </div>
-                    </div>
-                </div>
-                ` : ''}
-                
-                ${Object.keys(scoresByLevel).length > 0 ? `
-                <div class="progress-section">
-                    <h2>Highest Scores by N-Back Level</h2>
-                    <p>Your best performance at each difficulty level:</p>
-                    <div class="score-cards-container" id="score-cards-container">
-                        <div class="score-cards-track" id="score-cards-track">
-                            ${Object.keys(scoresByLevel).sort((a, b) => parseInt(a) - parseInt(b)).map(level => {
-                                const levelData = scoresByLevel[level];
-                                const activeSupplement = levelData.supplements && levelData.supplements.length > 0 
-                                    ? levelData.supplements.filter(s => s && s.trim()).join(', ')
-                                    : '';
-                                return `
-                                <div class="score-card">
-                                    <div class="score-card-level">Level ${level}-Back</div>
-                                    <div class="score-card-score">${levelData.score}</div>
-                                    <div class="score-card-supplements">
-                                        ${activeSupplement ? 
-                                            `Enhancements: ${activeSupplement}` : 
-                                            'No enhancements recorded'}
-                                    </div>
-                                </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                    <div class="carousel-nav">
-                        <div class="carousel-arrow" id="carousel-prev">‹</div>
-                        <div class="carousel-dots" id="carousel-dots"></div>
-                        <div class="carousel-arrow" id="carousel-next">›</div>
-                    </div>
-                    <div style="text-align: center; margin-top: 10px;">
-                        <span class="carousel-counter" id="carousel-counter">1 / ${Object.keys(scoresByLevel).length}</span>
                     </div>
                 </div>
                 ` : ''}
