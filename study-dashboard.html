@@ -837,16 +837,16 @@
                 }
             }
             
-            // Draw axes
+            // Draw axes (extended beyond chart area)
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            // Y-axis
-            ctx.moveTo(padding, padding);
-            ctx.lineTo(padding, height - padding);
-            // X-axis
-            ctx.moveTo(padding, height - padding);
-            ctx.lineTo(width - padding, height - padding);
+            // Y-axis (extend upward and downward)
+            ctx.moveTo(padding, padding - 10);
+            ctx.lineTo(padding, height - padding + 10);
+            // X-axis (extend leftward and rightward) 
+            ctx.moveTo(padding - 10, height - padding);
+            ctx.lineTo(width - padding + 10, height - padding);
             ctx.stroke();
             
             // Add labels (optimized for horizontal layout)
