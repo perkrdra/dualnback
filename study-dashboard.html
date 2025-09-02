@@ -152,7 +152,6 @@
             padding: 30px;
             border-radius: 10px;
             margin-bottom: 30px;
-            border-left: 4px solid #2552a3;
         }
         
         .challenge-content {
@@ -236,7 +235,6 @@
             padding: 20px;
             margin-bottom: 15px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-left: 4px solid #2552a3;
             transition: transform 0.2s ease;
         }
         
@@ -245,12 +243,10 @@
         }
         
         .challenge-item.victory {
-            border-left-color: #28a745;
             background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
         }
         
         .challenge-item.defeat {
-            border-left-color: #dc3545;
             background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
         }
         
@@ -1077,7 +1073,7 @@
                     <h2>Exam Score Achieved</h2>
                     <p>Congratulations! You completed 25 consecutive days of 10+ training sessions daily.</p>
                     <div class="study-scores-list">
-                        <div class="study-score-entry" style="background-color: #f0f8ff; border-left: 4px solid #2552a3;">
+                        <div class="study-score-entry" style="background-color: #f0f8ff;">
                             <strong>🎓 Exam Score</strong> - 
                             Score: ${examScore.score} | 
                             Completed: ${examScore.completedDate.toLocaleDateString()} | 
