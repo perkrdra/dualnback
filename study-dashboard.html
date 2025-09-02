@@ -869,6 +869,16 @@
             const { studyScores, examScore, currentStreak, consecutiveDaysProgress, todaysProgress, totalStudyPoints } = calculateStudyScores(sessions);
             
             const dashboardHTML = `
+                ${sessions.length > 0 ? `
+                <div class="progress-section">
+                    <h2>Progress Over Time</h2>
+                    <p>Track your Total Score progression across sessions:</p>
+                    <div class="progress-chart">
+                        <canvas id="progress-canvas" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+                ` : ''}
+                
                 ${Object.keys(scoresByLevel).length > 0 ? `
                 <div class="progress-section">
                     <h2>Highest Scores by N-Back Level</h2>
@@ -949,16 +959,6 @@
                         </div>
                     </div>
                 </div>
-                
-                ${sessions.length > 0 ? `
-                <div class="progress-section">
-                    <h2>Progress Over Time</h2>
-                    <p>Track your Total Score progression across sessions:</p>
-                    <div class="progress-chart">
-                        <canvas id="progress-canvas" class="chart-canvas"></canvas>
-                    </div>
-                </div>
-                ` : ''}
                 
                 <div class="supplement-tracker">
                     <div class="collapsible-header" onclick="toggleSupplementSection()">

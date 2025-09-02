@@ -1210,33 +1210,7 @@ class DualNBackGame {
                 border-top: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)'};
             ">
                 <h3 style="margin: 0 0 15px 0; font-size: 16px; color: ${textColor};">Challenge a Friend!</h3>
-                <p style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.9;">Add a personal message to your challenge:</p>
-                <textarea id="custom-challenge-message" placeholder="Optional: Add your own challenge message (e.g., 'Think you're smarter than me?')" style="
-                    width: 100%;
-                    max-width: 400px;
-                    height: 60px;
-                    padding: 10px;
-                    border: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.4)' : '#ccc'};
-                    border-radius: 8px;
-                    font-size: 14px;
-                    margin-bottom: 15px;
-                    resize: vertical;
-                    box-sizing: border-box;
-                    background: ${textColor === 'white' ? 'rgba(255,255,255,0.1)' : 'white'};
-                    color: ${textColor === 'white' ? 'white' : '#333'};
-                "></textarea>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button id="challenge-copy-btn" style="
-                        padding: 8px 16px;
-                        font-size: 14px;
-                        background: ${textColor === 'white' ? 'rgba(255,255,255,0.2)' : '#f0f0f0'};
-                        color: ${textColor};
-                        border: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.4)' : '#ccc'};
-                        border-radius: 20px;
-                        cursor: pointer;
-                        font-weight: bold;
-                        transition: all 0.2s;
-                    ">📋 Copy Challenge</button>
                     <button id="challenge-email-btn" style="
                         padding: 8px 16px;
                         font-size: 14px;
@@ -1294,31 +1268,15 @@ class DualNBackGame {
 
         // Add challenge button functionality
         if (showChallenge) {
-            const copyBtn = document.getElementById('challenge-copy-btn');
             const emailBtn = document.getElementById('challenge-email-btn');
             const socialBtn = document.getElementById('challenge-social-btn');
-
-            // Copy challenge button
-            if (copyBtn) {
-                copyBtn.onmouseover = () => copyBtn.style.transform = 'scale(1.05)';
-                copyBtn.onmouseout = () => copyBtn.style.transform = 'scale(1)';
-                copyBtn.onclick = () => {
-                    const customMessage = document.getElementById('custom-challenge-message')?.value || '';
-                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, customMessage);
-                    navigator.clipboard.writeText(challengeData.shareText).then(() => {
-                        copyBtn.textContent = '✅ Copied!';
-                        setTimeout(() => copyBtn.textContent = '📋 Copy Challenge', 2000);
-                    });
-                };
-            }
 
             // Email challenge button
             if (emailBtn) {
                 emailBtn.onmouseover = () => emailBtn.style.transform = 'scale(1.05)';
                 emailBtn.onmouseout = () => emailBtn.style.transform = 'scale(1)';
                 emailBtn.onclick = () => {
-                    const customMessage = document.getElementById('custom-challenge-message')?.value || '';
-                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, customMessage);
+                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, '');
                     const subject = encodeURIComponent(challengeData.emailSubject);
                     const body = encodeURIComponent(challengeData.emailBody);
                     window.open(`mailto:?subject=${subject}&body=${body}`);
@@ -1330,8 +1288,7 @@ class DualNBackGame {
                 socialBtn.onmouseover = () => socialBtn.style.transform = 'scale(1.05)';
                 socialBtn.onmouseout = () => socialBtn.style.transform = 'scale(1)';
                 socialBtn.onclick = () => {
-                    const customMessage = document.getElementById('custom-challenge-message')?.value || '';
-                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, customMessage);
+                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, '');
                     if (navigator.share) {
                         navigator.share({
                             title: challengeData.shareTitle,
@@ -1361,7 +1318,7 @@ class DualNBackGame {
                                percentage >= 90 ? '🔥 AMAZING!' :
                                percentage >= 80 ? '⭐ EXCELLENT!' :
                                percentage >= 70 ? '💪 GREAT JOB!' :
-                               '🧠 GOOD EFFORT!';
+                               '';
 
         // Generate unique challenge ID and create challenge URL with parameters
         const challengeId = this.generateChallengeId();
@@ -1381,13 +1338,13 @@ class DualNBackGame {
         // Include custom message if provided
         const customMessageText = customMessage.trim() ? `\n\n"${customMessage.trim()}"\n` : '\n';
         
-        const shareText = `${performanceLevel} I just scored ${score}/${totalAvailable} (${percentage}%) on ${gameMode} Level ${this.nBack}-Back brain training! 🧠${customMessageText}\nCan you beat my score? Accept my challenge:`;
+        const shareText = `${performanceLevel}${performanceLevel ? ' ' : ''}I just scored ${score}/${totalAvailable} (${percentage}%) on ${gameMode} Level ${this.nBack}-Back brain training! 🧠${customMessageText}\nCan you beat my score? Accept my challenge:`;
         
         const shareTitle = `Brain Training Challenge - ${percentage}% on ${gameMode}!`;
         
         const emailSubject = `🧠 Brain Training Challenge - Can you beat my ${percentage}% score?`;
         
-        const emailBody = `Hey!\n\n${performanceLevel}\n\nI just completed a brain training session and scored ${score} out of ${totalAvailable} matches (${percentage}%) on ${gameMode} Level ${this.nBack}-Back!${customMessage.trim() ? `\n\n"${customMessage.trim()}"` : ''}\n\nThink you can do better? 🤔\n\n🎯 ACCEPT MY CHALLENGE:\n${challengeUrl}\n\nThis link will set up the exact same conditions:\n• ${gameMode} mode\n• Level ${this.nBack}-Back difficulty\n• ${this.trialsPerSession} trials\n• Target to beat: ${score}/${totalAvailable} (${percentage}%)\n\nTry the scientifically-backed dual n-back training that improves working memory and fluid intelligence:\n\n• Based on cognitive neuroscience research\n• Tracks your progress over time\n• Multiple difficulty levels\n• Completely free to use\n\nLet me know how you do! I'm curious to see if you can beat my score.\n\nGood luck! 🧠💪`;
+        const emailBody = `Hey!\n\n${performanceLevel}${performanceLevel ? '\n\n' : ''}I just completed a brain training session and scored ${score} out of ${totalAvailable} matches (${percentage}%) on ${gameMode} Level ${this.nBack}-Back!${customMessage.trim() ? `\n\n"${customMessage.trim()}"` : ''}\n\nThink you can do better? 🤔\n\n🎯 ACCEPT MY CHALLENGE:\n${challengeUrl}\n\nThis link will set up the exact same conditions:\n• ${gameMode} mode\n• Level ${this.nBack}-Back difficulty\n• ${this.trialsPerSession} trials\n• Target to beat: ${score}/${totalAvailable} (${percentage}%)\n\nTry the scientifically-backed dual n-back training that improves working memory and fluid intelligence:\n\n• Based on cognitive neuroscience research\n• Tracks your progress over time\n• Multiple difficulty levels\n• Completely free to use\n\nLet me know how you do! I'm curious to see if you can beat my score.\n\nGood luck! 🧠💪`;
 
         // Store challenge data
         this.storeChallengeData({
