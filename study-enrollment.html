@@ -56,6 +56,7 @@
         .form-group input[type="text"],
         .form-group input[type="email"],
         .form-group input[type="number"],
+        .form-group input[type="password"],
         .form-group select {
             width: 100%;
             padding: 10px;
@@ -131,11 +132,28 @@
         
         <div class="enrollment-form">
             <div class="success-message" id="success-message">
-                <h2>Thank you for enrolling!</h2>
-                <p>You're now part of our study and automatically logged in. You can now access your dashboard to track your progress.</p>
-                <div style="margin-top: 20px;">
-                    <a href="study-dashboard.html" class="submit-btn" style="display: inline-block; width: auto; padding: 10px 30px; margin: 5px; background-color: #2552a3;">View Dashboard</a>
-                    <a href="/" class="submit-btn" style="display: inline-block; width: auto; padding: 10px 30px; margin: 5px; background-color: #28a745;">Start Training</a>
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
+                    <h2 style="margin: 0 0 15px 0; color: #2552a3; font-size: 1.8em;">Welcome to the Study!</h2>
+                    <p style="margin: 0; font-size: 1.1em; opacity: 0.8;">You're all set up and ready to start your cognitive enhancement journey.</p>
+                </div>
+                <div style="display: flex; justify-content: center;">
+                    <a href="/" style="
+                        display: inline-flex; 
+                        align-items: center; 
+                        gap: 8px;
+                        padding: 15px 30px; 
+                        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                        color: white; 
+                        text-decoration: none; 
+                        border-radius: 25px; 
+                        font-weight: bold;
+                        font-size: 1.1em;
+                        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(40, 167, 69, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(40, 167, 69, 0.3)'">
+                        🧠 Start Training
+                    </a>
                 </div>
             </div>
             
@@ -261,21 +279,33 @@
         document.getElementById('enrollment-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            console.log('Form submitted - starting enrollment process');
+            
             const formData = new FormData(e.target);
             const password = formData.get('password');
             const confirmPassword = formData.get('confirmPassword');
             
+            console.log('Form data collected:', {
+                participantId: formData.get('participantId'),
+                country: formData.get('country'),
+                age: formData.get('age')
+            });
+            
             // Validate passwords match
             if (password !== confirmPassword) {
+                console.log('Password validation failed: passwords do not match');
                 alert('Passwords do not match. Please try again.');
                 return;
             }
             
             // Validate password strength
             if (password.length < 6) {
+                console.log('Password validation failed: too short');
                 alert('Password must be at least 6 characters long.');
                 return;
             }
+            
+            console.log('Password validation passed');
             
             const userData = {
                 participantId: formData.get('participantId'),
@@ -312,24 +342,40 @@
                     localStorage.setItem('studyUserData', JSON.stringify(result.userData));
                     localStorage.setItem('studyEnrolled', 'true');
                 } else {
-                    const error = await response.json();
-                    if (error.message.includes('already exists')) {
-                        alert('This username is already taken. Please choose a different one.');
-                        return;
+                    // Check if response is JSON before parsing
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const error = await response.json();
+                        if (error.message && error.message.includes('already exists')) {
+                            alert('This username is already taken. Please choose a different one.');
+                            return;
+                        }
+                        throw new Error(error.message || 'Server error');
+                    } else {
+                        // Server returned HTML or other non-JSON response
+                        throw new Error('Server endpoint not available');
                     }
-                    throw new Error(error.message);
                 }
             } catch (serverError) {
                 console.log('Server registration failed, using localStorage:', serverError.message);
                 
                 // Fallback to localStorage only
-                localStorage.setItem('studyEnrolled', 'true');
-                localStorage.setItem('studyUserData', JSON.stringify(userData));
-                
-                // Create a simple session token
-                const sessionToken = btoa(userData.participantId + ':' + Date.now());
-                localStorage.setItem('sessionToken', sessionToken);
+                try {
+                    localStorage.setItem('studyEnrolled', 'true');
+                    localStorage.setItem('studyUserData', JSON.stringify(userData));
+                    
+                    // Create a simple session token
+                    const sessionToken = btoa(userData.participantId + ':' + Date.now());
+                    localStorage.setItem('sessionToken', sessionToken);
+                    console.log('Successfully stored data in localStorage');
+                } catch (storageError) {
+                    console.error('Failed to save to localStorage:', storageError);
+                    alert('Unable to save enrollment data. Please check if your browser allows local storage and try again.');
+                    return;
+                }
             }
+            
+            console.log('Enrollment completed successfully');
             
             // Show success message
             document.getElementById('enrollment-form').style.display = 'none';

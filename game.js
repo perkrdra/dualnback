@@ -597,11 +597,19 @@ class DualNBackGame {
         console.log('All available voices:', this.availableVoices.map(v => `${v.name} (${v.lang})`));
         
         // English voices only - be more aggressive on Samsung devices
-        let englishVoices = this.availableVoices.filter(voice => 
-            voice.lang.startsWith('en-') || 
-            voice.lang === 'en' ||
-            (voice.name.toLowerCase().includes('english') && !voice.name.toLowerCase().includes('norwegian'))
-        );
+        let englishVoices = this.availableVoices.filter(voice => {
+            const name = voice.name.toLowerCase();
+            const lang = voice.lang.toLowerCase();
+            
+            // Exclude Norwegian voices explicitly
+            if (name.includes('norwegian') || name.includes('jon') || lang.includes('nb-') || lang.includes('no-')) {
+                return false;
+            }
+            
+            return voice.lang.startsWith('en-') || 
+                   voice.lang === 'en' ||
+                   (name.includes('english') && !name.includes('norwegian'));
+        });
         
         console.log('Filtered English voices:', englishVoices.map(v => `${v.name} (${v.lang})`));
         

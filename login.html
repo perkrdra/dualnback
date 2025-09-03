@@ -184,10 +184,17 @@
                     // Redirect to dashboard
                     window.location.href = 'study-dashboard.html';
                     return;
+                } else {
+                    // Check if response is JSON before parsing
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Login failed');
+                    } else {
+                        // Server returned HTML or other non-JSON response
+                        throw new Error('Server endpoint not available');
+                    }
                 }
-                
-                const error = await response.json();
-                throw new Error(error.message || 'Login failed');
                 
             } catch (serverError) {
                 console.log('Server login failed, trying localStorage fallback:', serverError.message);
