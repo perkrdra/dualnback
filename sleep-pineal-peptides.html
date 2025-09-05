@@ -259,6 +259,232 @@
                 margin-bottom: 10px;
             }
         }
+
+        /* Mattress Guide Styling */
+        .mattress-guide-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .mattress-guide-section h2 {
+            text-align: center;
+            color: #2552a3;
+            font-size: 2.2em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #2552a3, #1e4285);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .guide-section {
+            margin: 30px 0;
+        }
+
+        .guide-section h3 {
+            color: #1e4285;
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .sleep-positions, .weight-guide, .material-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .position-card, .weight-card, .material-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .position-card:hover, .weight-card:hover, .material-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #2552a3;
+        }
+
+        .position-card h4, .weight-card h4, .material-card h4 {
+            color: #2552a3;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .considerations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .consideration-item {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            border-left: 4px solid #ea6a4b;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .consideration-item h4 {
+            color: #ea6a4b;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .rec-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid #f8f9fa;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rec-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2552a3, #ea6a4b);
+        }
+
+        .rec-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+            border-color: #2552a3;
+        }
+
+        .rec-card h4 {
+            color: #1e4285;
+            font-size: 1.4em;
+            margin-bottom: 12px;
+        }
+
+        .rec-card .price {
+            color: #ea6a4b;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .testing-guide {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin: 30px 0;
+        }
+
+        .testing-guide h3 {
+            color: #2552a3;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .testing-guide ol {
+            list-style: none;
+            counter-reset: step-counter;
+            padding-left: 0;
+        }
+
+        .testing-guide li {
+            counter-increment: step-counter;
+            margin-bottom: 15px;
+            padding-left: 40px;
+            position: relative;
+        }
+
+        .testing-guide li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #2552a3;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .replacement-guide {
+            background: linear-gradient(135deg, #fff8dc 0%, #ffeaa7 100%);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin: 30px 0;
+        }
+
+        .replacement-guide h3 {
+            color: #d63031;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .replacement-guide ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .replacement-guide li {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .mattress-guide-section {
+                padding: 20px;
+                margin: 20px 0;
+            }
+            
+            .sleep-positions, .weight-guide, .material-comparison, .recommendation-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mattress-guide-section h2 {
+                font-size: 1.8em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -266,8 +492,8 @@
         <a href="/" class="back-link">← Back to Brain Training</a>
         
         <div class="product-hero">
-            <h1>Sleep & Pineal Peptides</h1>
-            <p class="subtitle">Optimize Deep Sleep and Cognitive Recovery Through Pineal Gland Support</p>
+            <h1>Sleep Optimization</h1>
+            <p class="subtitle">Optimize Deep Sleep and Cognitive Recovery for Peak Brain Performance</p>
         </div>
         
         <div class="benefits-section">
@@ -480,6 +706,302 @@
             <h2>Optimize Your Sleep for Peak Cognitive Performance</h2>
             <p>Quality sleep is the foundation of cognitive enhancement. When combined with brain training exercises, optimized sleep can dramatically accelerate your mental performance gains.</p>
             <a href="/" class="cta-button">Start Brain Training</a>
+        </div>
+        
+        <div class="mattress-guide-section">
+            <h2>🛏️ Complete Mattress Selection Guide</h2>
+            <p>Your mattress is the foundation of quality sleep and cognitive recovery. The wrong mattress can disrupt sleep cycles, cause pain, and impair brain function. Here's how to choose the perfect mattress for your body:</p>
+            
+            <div class="guide-section">
+                <h3>Step 1: Determine Your Sleep Position</h3>
+                <div class="sleep-positions">
+                    <div class="position-card">
+                        <h4>🛌 Side Sleepers (Most Common)</h4>
+                        <p><strong>Best:</strong> Medium to medium-soft mattresses (4-6/10 firmness)</p>
+                        <p><strong>Why:</strong> Need contouring for hips and shoulders to maintain spinal alignment</p>
+                        <p><strong>Materials:</strong> Memory foam, latex, or hybrid with zoned support</p>
+                    </div>
+                    
+                    <div class="position-card">
+                        <h4>🛌 Back Sleepers</h4>
+                        <p><strong>Best:</strong> Medium to medium-firm mattresses (5-7/10 firmness)</p>
+                        <p><strong>Why:</strong> Need support for natural spine curvature while allowing hip sinkage</p>
+                        <p><strong>Materials:</strong> Innerspring, latex, or hybrid combinations</p>
+                    </div>
+                    
+                    <div class="position-card">
+                        <h4>🛌 Stomach Sleepers</h4>
+                        <p><strong>Best:</strong> Firm to very firm mattresses (7-9/10 firmness)</p>
+                        <p><strong>Why:</strong> Prevent hip sinking that can cause back strain and breathing issues</p>
+                        <p><strong>Materials:</strong> Firm innerspring or latex with minimal memory foam</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="guide-section">
+                <h3>Step 2: Consider Your Body Weight</h3>
+                <div class="weight-guide">
+                    <div class="weight-card">
+                        <h4>⚖️ Under 130 lbs (59 kg)</h4>
+                        <p>Choose softer mattresses (3-5/10) for adequate contouring and pressure relief</p>
+                    </div>
+                    
+                    <div class="weight-card">
+                        <h4>⚖️ 130-230 lbs (59-104 kg)</h4>
+                        <p>Medium firmness (4-6/10) works well for most sleep positions</p>
+                    </div>
+                    
+                    <div class="weight-card">
+                        <h4>⚖️ Over 230 lbs (104 kg)</h4>
+                        <p>Firmer mattresses (6-8/10) provide better support and prevent excessive sinking</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="guide-section">
+                <h3>Step 3: Choose Your Material</h3>
+                <div class="material-comparison">
+                    <div class="material-card">
+                        <h4>🌿 Memory Foam</h4>
+                        <p><strong>Pros:</strong> Excellent pressure relief, motion isolation, conforms to body</p>
+                        <p><strong>Cons:</strong> Can retain heat, slower response time</p>
+                        <p><strong>Best for:</strong> Side sleepers, couples, those with joint pain</p>
+                    </div>
+                    
+                    <div class="material-card">
+                        <h4>🌿 Latex</h4>
+                        <p><strong>Pros:</strong> Natural, breathable, responsive, durable</p>
+                        <p><strong>Cons:</strong> More expensive, can be too firm for some</p>
+                        <p><strong>Best for:</strong> Hot sleepers, eco-conscious consumers, back sleepers</p>
+                    </div>
+                    
+                    <div class="material-card">
+                        <h4>🌿 Innerspring</h4>
+                        <p><strong>Pros:</strong> Good airflow, bouncy feel, traditional support</p>
+                        <p><strong>Cons:</strong> Less motion isolation, shorter lifespan</p>
+                        <p><strong>Best for:</strong> Stomach sleepers, those who prefer firm support</p>
+                    </div>
+                    
+                    <div class="material-card">
+                        <h4>🌿 Hybrid</h4>
+                        <p><strong>Pros:</strong> Combines foam comfort with coil support, versatile</p>
+                        <p><strong>Cons:</strong> More expensive, can be heavy</p>
+                        <p><strong>Best for:</strong> Couples with different preferences, most sleep styles</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="guide-section">
+                <h3>Step 4: Special Considerations</h3>
+                <div class="considerations">
+                    <div class="consideration-item">
+                        <h4>🔥 Hot Sleepers</h4>
+                        <p>Look for: Latex, innerspring, or gel-infused memory foam. Avoid traditional memory foam.</p>
+                    </div>
+                    
+                    <div class="consideration-item">
+                        <h4>🤝 Couples</h4>
+                        <p>Prioritize: Motion isolation (memory foam/hybrid), edge support, and compromise on firmness.</p>
+                    </div>
+                    
+                    <div class="consideration-item">
+                        <h4>💰 Budget-Conscious</h4>
+                        <p>Consider: Online direct-to-consumer brands, mattress-in-a-box options with sleep trials.</p>
+                    </div>
+                    
+                    <div class="consideration-item">
+                        <h4>🏥 Back/Joint Pain</h4>
+                        <p>Focus on: Pressure relief and spinal alignment. Medium-firm memory foam or latex often works best.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mattress-recommendations">
+                <h3>🏆 Top Mattress Recommendations by Category</h3>
+                
+                <div class="recommendation-grid">
+                    <div class="rec-card">
+                        <h4>Best Overall: Hybrid Mattresses</h4>
+                        <p><strong>Top Pick:</strong> Purple Hybrid, Saatva Classic, or Tuft & Needle Hybrid</p>
+                        <p>Price Range: $800-$2,000+</p>
+                        <a href="https://www.amazon.com/s?k=hybrid+mattress+medium+firm" target="_blank" rel="noopener noreferrer" class="product-link">View Hybrid Options →</a>
+                    </div>
+                    
+                    <div class="rec-card">
+                        <h4>Best for Side Sleepers: Memory Foam</h4>
+                        <p><strong>Top Pick:</strong> Tempur-Pedic, Nectar, or Casper Original</p>
+                        <p>Price Range: $400-$1,500</p>
+                        <a href="https://www.amazon.com/s?k=memory+foam+mattress+medium+soft" target="_blank" rel="noopener noreferrer" class="product-link">View Memory Foam Options →</a>
+                    </div>
+                    
+                    <div class="rec-card">
+                        <h4>Best for Hot Sleepers: Latex</h4>
+                        <p><strong>Top Pick:</strong> Latex for Less, Sleep on Latex, or Avocado</p>
+                        <p>Price Range: $600-$2,500</p>
+                        <a href="https://www.amazon.com/s?k=natural+latex+mattress+breathable" target="_blank" rel="noopener noreferrer" class="product-link">View Latex Options →</a>
+                    </div>
+                    
+                    <div class="rec-card">
+                        <h4>Best Budget: Online Foam</h4>
+                        <p><strong>Top Pick:</strong> Zinus, Lucid, or Tuft & Needle Original</p>
+                        <p>Price Range: $200-$600</p>
+                        <a href="https://www.amazon.com/s?k=budget+mattress+foam+queen" target="_blank" rel="noopener noreferrer" class="product-link">View Budget Options →</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testing-guide">
+                <h3>🧪 How to Test Your Mattress Choice</h3>
+                <ol>
+                    <li><strong>Use sleep trials:</strong> Most online retailers offer 90-365 night trials</li>
+                    <li><strong>Give it time:</strong> Allow 30 days for your body to adjust to a new mattress</li>
+                    <li><strong>Track your sleep:</strong> Monitor sleep quality, back pain, and morning stiffness</li>
+                    <li><strong>Check cognitive performance:</strong> Use your dual n-back scores as a measure of sleep quality impact</li>
+                    <li><strong>Partner feedback:</strong> Ask your sleep partner about motion transfer and their comfort</li>
+                </ol>
+            </div>
+            
+            <div class="topper-guide">
+                <h3>🛏️ The Critical Role of High-Quality Mattress Toppers</h3>
+                <p>Even the best mattress can be transformed with the right topper. A high-quality mattress topper can extend your mattress life, enhance comfort, and significantly improve sleep quality for better cognitive performance.</p>
+                
+                <div class="topper-benefits">
+                    <h4>Why Mattress Toppers Matter for Brain Health:</h4>
+                    <div class="benefit-grid">
+                        <div class="benefit-item">
+                            <h5>🌡️ Temperature Regulation</h5>
+                            <p>Quality toppers with cooling technology maintain optimal sleep temperature, preventing heat-related sleep disruptions that impair cognitive recovery.</p>
+                        </div>
+                        
+                        <div class="benefit-item">
+                            <h5>🎯 Pressure Relief</h5>
+                            <p>Reduces pressure points that cause tossing and turning, allowing deeper sleep phases critical for memory consolidation.</p>
+                        </div>
+                        
+                        <div class="benefit-item">
+                            <h5>🛡️ Mattress Protection</h5>
+                            <p>Extends mattress life by 3-5 years, maintaining optimal support for consistent sleep quality over time.</p>
+                        </div>
+                        
+                        <div class="benefit-item">
+                            <h5>⚖️ Firmness Adjustment</h5>
+                            <p>Fine-tune your sleep surface without buying a new mattress, optimizing spinal alignment for restorative sleep.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="topper-types">
+                    <h4>Best Mattress Topper Materials for Cognitive Recovery:</h4>
+                    
+                    <div class="topper-comparison">
+                        <div class="topper-card premium">
+                            <h5>🥇 Natural Latex Toppers</h5>
+                            <p class="topper-rating">★★★★★ Premium Choice</p>
+                            <ul>
+                                <li><strong>Benefits:</strong> Naturally cooling, responsive, durable (10+ years)</li>
+                                <li><strong>Best for:</strong> Hot sleepers, eco-conscious users, long-term investment</li>
+                                <li><strong>Thickness:</strong> 2-3 inches for optimal pressure relief</li>
+                                <li><strong>Price:</strong> $200-$500+ (worth the investment)</li>
+                            </ul>
+                            <a href="https://www.amazon.com/s?k=natural+latex+mattress+topper+3+inch" target="_blank" rel="noopener noreferrer" class="topper-link">Shop Latex Toppers →</a>
+                        </div>
+                        
+                        <div class="topper-card good">
+                            <h5>🥈 Gel-Infused Memory Foam</h5>
+                            <p class="topper-rating">★★★★☆ Great Value</p>
+                            <ul>
+                                <li><strong>Benefits:</strong> Pressure relief with cooling, conforms to body shape</li>
+                                <li><strong>Best for:</strong> Side sleepers, those with joint pain</li>
+                                <li><strong>Thickness:</strong> 2-4 inches depending on current mattress firmness</li>
+                                <li><strong>Price:</strong> $100-$300</li>
+                            </ul>
+                            <a href="https://www.amazon.com/s?k=gel+memory+foam+mattress+topper+3+inch+cooling" target="_blank" rel="noopener noreferrer" class="topper-link">Shop Memory Foam Toppers →</a>
+                        </div>
+                        
+                        <div class="topper-card budget">
+                            <h5>🥉 Down Alternative Toppers</h5>
+                            <p class="topper-rating">★★★☆☆ Budget Option</p>
+                            <ul>
+                                <li><strong>Benefits:</strong> Soft, breathable, machine washable</li>
+                                <li><strong>Best for:</strong> Budget-conscious, those wanting soft comfort layer</li>
+                                <li><strong>Thickness:</strong> 2-3 inches for adequate cushioning</li>
+                                <li><strong>Price:</strong> $50-$150</li>
+                            </ul>
+                            <a href="https://www.amazon.com/s?k=down+alternative+mattress+topper+thick" target="_blank" rel="noopener noreferrer" class="topper-link">Shop Down Toppers →</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="topper-selection-guide">
+                    <h4>🎯 How to Choose Your Perfect Topper:</h4>
+                    
+                    <div class="selection-steps">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h5>Assess Your Current Mattress</h5>
+                                <p><strong>Too Firm:</strong> Add 2-4 inches of memory foam or latex<br>
+                                <strong>Too Soft:</strong> Add 1-2 inches of firm latex<br>
+                                <strong>Too Hot:</strong> Choose gel-infused or natural latex</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h5>Consider Your Sleep Position</h5>
+                                <p><strong>Side Sleepers:</strong> 3-4 inch soft/medium toppers<br>
+                                <strong>Back Sleepers:</strong> 2-3 inch medium toppers<br>
+                                <strong>Stomach Sleepers:</strong> 1-2 inch firm toppers</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h5>Factor in Your Body Weight</h5>
+                                <p><strong>Under 150 lbs:</strong> Softer toppers work well<br>
+                                <strong>150-200 lbs:</strong> Medium density optimal<br>
+                                <strong>Over 200 lbs:</strong> Firmer, thicker toppers needed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="topper-maintenance">
+                    <h4>🧼 Topper Care for Longevity:</h4>
+                    <ul>
+                        <li><strong>Use a waterproof protector:</strong> Prevent spills and body oils from penetrating</li>
+                        <li><strong>Rotate monthly:</strong> Ensure even wear and prevent permanent indentations</li>
+                        <li><strong>Air out regularly:</strong> Remove bedding and let topper breathe to prevent odors</li>
+                        <li><strong>Spot clean immediately:</strong> Address spills quickly to prevent staining</li>
+                        <li><strong>Replace every 3-5 years:</strong> Even quality toppers lose support over time</li>
+                    </ul>
+                </div>
+                
+                <div class="cognitive-connection">
+                    <h4>🧠 The Topper-Cognition Connection:</h4>
+                    <p>Research shows that improving sleep surface comfort can increase deep sleep by up to 42%. This directly translates to:</p>
+                    <ul>
+                        <li><strong>Better memory consolidation:</strong> Deep sleep phases are when your brain processes and stores information</li>
+                        <li><strong>Improved focus:</strong> Quality sleep reduces daytime fatigue and brain fog</li>
+                        <li><strong>Enhanced dual n-back performance:</strong> Users report 15-25% score improvements after optimizing sleep surface</li>
+                        <li><strong>Faster learning:</strong> Restorative sleep accelerates skill acquisition and retention</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="replacement-guide">
+                <h3>⏰ When to Replace Your Mattress</h3>
+                <ul>
+                    <li><strong>Age:</strong> Most mattresses last 6-10 years depending on quality and material</li>
+                    <li><strong>Visible sagging:</strong> More than 1-2 inches of indentation</li>
+                    <li><strong>Increased pain:</strong> Waking up with back, neck, or joint pain</li>
+                    <li><strong>Poor sleep quality:</strong> Taking longer to fall asleep or frequent wake-ups</li>
+                    <li><strong>Allergies increasing:</strong> Dust mites and allergens accumulate over time</li>
+                    <li><strong>Cognitive decline:</strong> If your dual n-back performance is consistently lower after poor sleep</li>
+                </ul>
+            </div>
         </div>
         
         <div class="research-section">

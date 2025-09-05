@@ -1218,18 +1218,7 @@ class DualNBackGame {
                 border-top: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)'};
             ">
                 <h3 style="margin: 0 0 15px 0; font-size: 16px; color: ${textColor};">Challenge a Friend!</h3>
-                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button id="challenge-email-btn" style="
-                        padding: 8px 16px;
-                        font-size: 14px;
-                        background: ${textColor === 'white' ? 'rgba(255,255,255,0.2)' : '#f0f0f0'};
-                        color: ${textColor};
-                        border: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.4)' : '#ccc'};
-                        border-radius: 20px;
-                        cursor: pointer;
-                        font-weight: bold;
-                        transition: all 0.2s;
-                    ">✉️ Email Challenge</button>
+                <div style="display: flex; justify-content: center;">
                     <button id="challenge-social-btn" style="
                         padding: 8px 16px;
                         font-size: 14px;
@@ -1276,20 +1265,7 @@ class DualNBackGame {
 
         // Add challenge button functionality
         if (showChallenge) {
-            const emailBtn = document.getElementById('challenge-email-btn');
             const socialBtn = document.getElementById('challenge-social-btn');
-
-            // Email challenge button
-            if (emailBtn) {
-                emailBtn.onmouseover = () => emailBtn.style.transform = 'scale(1.05)';
-                emailBtn.onmouseout = () => emailBtn.style.transform = 'scale(1)';
-                emailBtn.onclick = () => {
-                    const challengeData = this.generateChallengeData(score, totalAvailableMatches, '');
-                    const subject = encodeURIComponent(challengeData.emailSubject);
-                    const body = encodeURIComponent(challengeData.emailBody);
-                    window.open(`mailto:?subject=${subject}&body=${body}`);
-                };
-            }
 
             // Social share button
             if (socialBtn) {
