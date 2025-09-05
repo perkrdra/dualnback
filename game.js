@@ -1217,7 +1217,6 @@ class DualNBackGame {
                 padding-top: 20px;
                 border-top: 1px solid ${textColor === 'white' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)'};
             ">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: ${textColor};">Challenge a Friend!</h3>
                 <div style="display: flex; justify-content: center;">
                     <button id="challenge-social-btn" style="
                         padding: 8px 16px;
@@ -1229,7 +1228,7 @@ class DualNBackGame {
                         cursor: pointer;
                         font-weight: bold;
                         transition: all 0.2s;
-                    ">🚀 Share Results</button>
+                    "><span style=\"color: #ea6a4b;\">🧠</span> Challenge Friend</button>
                 </div>
             </div>
         ` : '';
@@ -1322,13 +1321,13 @@ class DualNBackGame {
         // Include custom message if provided
         const customMessageText = customMessage.trim() ? `\n\n"${customMessage.trim()}"\n` : '\n';
         
-        const shareText = `${performanceLevel}${performanceLevel ? ' ' : ''}I just scored ${score}/${totalAvailable} (${percentage}%) on ${gameMode} Level ${this.nBack}-Back brain training! 🧠${customMessageText}\nCan you beat my score? Accept my challenge:`;
+        const shareText = `${performanceLevel}${performanceLevel ? ' ' : ''}I scored ${score}/${totalAvailable} (${percentage}%) on Level ${this.nBack}-Back brain training! 🧠${customMessageText}\nCan you beat my score?`;
         
         const shareTitle = `Brain Training Challenge - ${percentage}% on ${gameMode}!`;
         
         const emailSubject = `🧠 Brain Training Challenge - Can you beat my ${percentage}% score?`;
         
-        const emailBody = `Hey!\n\n${performanceLevel}${performanceLevel ? '\n\n' : ''}I just completed a brain training session and scored ${score} out of ${totalAvailable} matches (${percentage}%) on ${gameMode} Level ${this.nBack}-Back!${customMessage.trim() ? `\n\n"${customMessage.trim()}"` : ''}\n\nThink you can do better? 🤔\n\n🎯 ACCEPT MY CHALLENGE:\n${challengeUrl}\n\nThis link will set up the exact same conditions:\n• ${gameMode} mode\n• Level ${this.nBack}-Back difficulty\n• ${this.trialsPerSession} trials\n• Target to beat: ${score}/${totalAvailable} (${percentage}%)\n\nTry the scientifically-backed dual n-back training that improves working memory and fluid intelligence:\n\n• Based on cognitive neuroscience research\n• Tracks your progress over time\n• Multiple difficulty levels\n• Completely free to use\n\nLet me know how you do! I'm curious to see if you can beat my score.\n\nGood luck! 🧠💪`;
+        const emailBody = `${performanceLevel}${performanceLevel ? '\n\n' : ''}I scored ${score}/${totalAvailable} (${percentage}%) on Level ${this.nBack}-Back brain training!${customMessage.trim() ? `\n\n"${customMessage.trim()}"` : ''}\n\nCan you beat my score? 🤔\n\n🎯 CHALLENGE LINK:\n${challengeUrl}\n\nConditions:\n• Level ${this.nBack}-Back difficulty  \n• ${this.trialsPerSession} trials\n• Target: ${score}/${totalAvailable} (${percentage}%)\n\nGood luck! 🧠`;
 
         // Store challenge data
         this.storeChallengeData({
